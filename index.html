@@ -1,0 +1,6175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레시피북 · 유앤김패밀리</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F2544; --navy-deep:#0A1830; --gold:#C6A15B; --gold-soft:#E4CD9C;
+  --cream:#FBF9F4; --ink:#2A2A28; --line:#E6DCC6;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; font-family:'Nanum Gothic',sans-serif; background:var(--cream); color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.topbar{
+  background:linear-gradient(155deg,var(--navy-deep) 0%,var(--navy) 65%);
+  color:#fff; padding:22px 20px 18px 20px; position:sticky; top:0; z-index:20;
+  border-bottom:2px solid var(--gold);
+}
+.topbar-inner{max-width:900px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+.brand{display:flex; flex-direction:column;}
+.brand .kicker{color:var(--gold-soft); font-size:9px; letter-spacing:2.5px; font-weight:700;}
+.brand h1{font-family:'Noto Serif KR',serif; font-weight:900; font-size:22px; margin:3px 0 0 0;}
+.pin-badge{
+  border:1px solid var(--gold); color:var(--gold-soft); background:transparent;
+  font-size:11px; padding:6px 12px; border-radius:16px; cursor:pointer; font-weight:700;
+  white-space:nowrap;
+}
+
+.category-bar{max-width:900px; margin:16px auto 0 auto; padding:0 16px; display:flex; gap:10px;}
+.cat-btn{
+  flex:1; padding:14px 10px; border-radius:12px; border:2px solid var(--line);
+  background:#fff; font-family:'Noto Serif KR',serif; font-weight:700; font-size:15px;
+  color:#999; cursor:pointer; transition:all .15s;
+}
+.cat-btn.active{ border-color:var(--gold); color:var(--navy); background:#FFFDF7;
+  box-shadow:0 2px 10px rgba(198,161,91,0.25); }
+
+.tag-row{max-width:900px; margin:12px auto 0 auto; padding:0 16px; display:flex; gap:8px; flex-wrap:wrap;}
+.tag-chip{
+  padding:6px 14px; border-radius:16px; border:1px solid var(--line); background:#fff;
+  font-size:12.5px; color:#666; cursor:pointer; font-weight:700;
+}
+.tag-chip.active{ background:var(--navy); color:var(--gold-soft); border-color:var(--navy); }
+
+.search-row{max-width:900px; margin:12px auto 0 auto; padding:0 16px;}
+.search-row input{
+  width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line);
+  font-size:14px; font-family:'Nanum Gothic',sans-serif; background:#fff;
+}
+
+.grid{
+  max-width:900px; margin:18px auto 40px auto; padding:0 16px;
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px;
+}
+.card{
+  background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden;
+  cursor:pointer; transition:transform .15s, box-shadow .15s;
+}
+.card:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(15,37,68,0.12); }
+.card-head{ background:linear-gradient(155deg,var(--navy-deep) 0%,var(--navy) 65%); padding:16px 18px 12px 18px; }
+.card-head .name{ font-family:'Noto Serif KR',serif; font-weight:900; color:#fff; font-size:19px; }
+.card-head .summary{ color:#C9BEA9; font-size:11.5px; margin-top:4px; line-height:1.4; }
+.card-body{ padding:12px 18px 16px 18px; }
+.card-meta{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.pill{ border:1px solid var(--gold); color:var(--navy); font-size:10.5px; padding:2px 9px; border-radius:12px; font-weight:700;}
+.card-tags{ display:flex; gap:5px; flex-wrap:wrap; }
+.mini-tag{ font-size:10px; color:#999; background:#F3F1EB; padding:2px 8px; border-radius:9px; }
+
+.empty-state{ max-width:900px; margin:60px auto; text-align:center; color:#999; padding:0 20px; }
+
+.fab{
+  position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
+  background:var(--navy); color:var(--gold-soft); border:2px solid var(--gold);
+  font-size:26px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 6px 18px rgba(15,37,68,0.35); z-index:30;
+}
+
+/* Modal (recipe detail / add form / pin) */
+.overlay{
+  display:none; position:fixed; inset:0; background:rgba(10,24,48,0.55); z-index:50;
+  align-items:flex-start; justify-content:center; overflow-y:auto; padding:26px 14px;
+}
+.overlay.show{ display:flex; }
+.modal{
+  background:var(--cream); max-width:640px; width:100%; border-radius:14px; overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-close{
+  position:absolute; top:14px; right:16px; color:#fff; background:rgba(255,255,255,0.15);
+  border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer;
+}
+
+/* Recipe detail styles (matches PDF card) */
+.rband{ background:linear-gradient(155deg,var(--navy-deep) 0%,var(--navy) 65%); padding:24px 28px 18px 28px; position:relative;}
+.rband::after{ content:""; display:block; margin-top:14px; height:2px; background:linear-gradient(90deg,var(--gold) 0%, var(--gold-soft) 45%, transparent 100%);}
+.rkicker{ color:var(--gold-soft); font-size:9px; letter-spacing:2.5px; font-weight:700; }
+.rname{ font-family:'Noto Serif KR',serif; font-weight:900; color:#fff; font-size:26px; margin:8px 0 6px 0; }
+.rsummary{ font-family:'Noto Serif KR',serif; color:#D8CDBB; font-size:11px; }
+.rmeta{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rmeta span{ border:1px solid var(--gold); color:var(--gold-soft); font-size:10.5px; padding:4px 12px; border-radius:16px; font-weight:700;}
+.rcontent{ padding:10px 28px 26px 28px; }
+.rsection{ margin-top:18px; }
+.rsection-title{ font-family:'Noto Serif KR',serif; font-weight:700; color:var(--navy); font-size:14px; display:flex; align-items:center; gap:8px;}
+.rsection-title .num{ display:inline-flex; align-items:center; justify-content:center; width:19px; height:19px; border-radius:50%; background:var(--navy); color:var(--gold-soft); font-size:9.5px; font-weight:800;}
+.rrule{ height:1px; background:linear-gradient(90deg,var(--gold) 0%, #E9DFC8 40%, transparent 100%); margin:6px 0 10px 0;}
+.ing-row{ display:flex; justify-content:space-between; align-items:baseline; padding:6px 0; border-bottom:1px dotted #D8CBB0; font-size:13px;}
+.ing-row .iname{ font-weight:700; }
+.ing-row .inote{ display:block; color:#999; font-size:10.5px; margin-top:1px; font-weight:400;}
+.ing-row .iamt{ font-family:'Noto Serif KR',serif; color:var(--navy); font-weight:700; font-size:12.5px; white-space:nowrap; padding-left:10px;}
+.step-row{ display:flex; gap:10px; margin-bottom:9px; align-items:flex-start; font-size:13px;}
+.step-row .snum{ flex:0 0 auto; width:21px; height:21px; border-radius:50%; border:1.4px solid var(--gold); color:var(--navy); font-weight:800; font-size:10.5px; display:flex; align-items:center; justify-content:center;}
+ul.plainlist{ margin:0; padding-left:0; list-style:none; }
+ul.plainlist li{ padding:4px 0 4px 15px; position:relative; font-size:13px;}
+ul.plainlist li::before{ content:""; position:absolute; left:0; top:11px; width:5px; height:5px; background:var(--gold); border-radius:50%;}
+.healthbox{ background:#fff; border:1px solid var(--gold-soft); border-left:3px solid var(--gold); border-radius:4px; padding:10px 18px;}
+.rtaglist{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
+.rtag{ font-size:11px; background:#F3F1EB; color:#777; padding:3px 10px; border-radius:10px;}
+.rfooter{ text-align:center; padding:16px 28px 22px 28px;}
+.rfooter .rule2{ height:1px; background:linear-gradient(90deg,transparent 0%, var(--gold) 50%, transparent 100%); margin-bottom:10px;}
+.rfooter .brand2{ font-family:'Noto Serif KR',serif; font-weight:700; letter-spacing:2px; color:var(--navy); font-size:10px;}
+.rfooter .tagline{ color:#999; font-size:8.5px; margin-top:2px; }
+.detail-actions{ display:flex; gap:8px; padding:0 28px 20px 28px; }
+.btn{ flex:1; padding:10px; border-radius:8px; border:none; font-weight:700; font-size:13px; cursor:pointer; }
+.btn-pdf{ background:var(--navy); color:var(--gold-soft); }
+.btn-del{ background:#fff; color:#B3403A; border:1px solid #E6B8B3; }
+
+/* Add/Edit form modal */
+.form-wrap{ padding:20px 24px; }
+.form-wrap h2{ font-family:'Noto Serif KR',serif; color:var(--navy); margin-top:0;}
+.form-wrap label{ display:block; font-size:12px; font-weight:700; color:#555; margin:12px 0 4px 0;}
+.form-wrap input, .form-wrap textarea{
+  width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px; font-family:'Nanum Gothic'; font-size:13px;
+}
+.form-wrap textarea{ min-height:70px; resize:vertical; }
+.form-hint{ font-size:11px; color:#999; margin-top:3px; }
+.form-actions{ display:flex; gap:8px; margin-top:18px; }
+.btn-save{ background:var(--navy); color:var(--gold-soft); }
+.btn-cancel{ background:#eee; color:#555; }
+
+/* PIN modal */
+.pin-wrap{ padding:30px 26px; text-align:center; }
+.pin-wrap h2{ font-family:'Noto Serif KR',serif; color:var(--navy); }
+.pin-wrap input{
+  width:160px; text-align:center; letter-spacing:6px; font-size:20px; padding:10px;
+  border:1px solid var(--line); border-radius:8px; margin:14px 0;
+}
+.sync-status{ font-size:11px; color:#999; margin-top:8px; }
+
+@media print{
+  .topbar,.category-bar,.tag-row,.search-row,.grid,.fab{ display:none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="kicker">유 앤 김 패 밀 리</div>
+      <h1>레시피북</h1>
+    </div>
+    <button class="pin-badge" onclick="openPinModal()" id="pinBtn">PIN 동기화</button>
+  </div>
+</div>
+
+<div class="category-bar">
+  <button class="cat-btn active" id="catTasteBtn" onclick="setCategory('taste')">맛으로 찾기</button>
+  <button class="cat-btn" id="catHealthBtn" onclick="setCategory('health')">건강으로 찾기</button>
+</div>
+
+<div class="tag-row" id="tagRow"></div>
+
+<div class="search-row">
+  <input type="text" id="searchInput" placeholder="요리 이름으로 검색 (예: 갈비찜, 대구탕)" oninput="renderGrid()">
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="empty-state" id="emptyState" style="display:none;">저장된 레시피가 없습니다. 오른쪽 아래 + 버튼으로 추가해보세요.</div>
+
+<div class="fab" onclick="openAddForm()">+</div>
+
+<!-- Recipe Detail Modal -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('detailOverlay')">✕</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- Add/Edit Form Modal -->
+<div class="overlay" id="formOverlay">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('formOverlay')" style="color:#333;background:rgba(0,0,0,0.08);">✕</button>
+    <div class="form-wrap">
+      <h2>레시피 추가</h2>
+      <p class="form-hint">채팅에서 recipe-lookup 스킬로 받은 JSON을 그대로 붙여넣거나, 아래 개별 항목을 입력하세요.</p>
+      <label>JSON 붙여넣기 (선택)</label>
+      <textarea id="jsonPaste" placeholder='{"name":"대구탕", "summary":"...", ...}'></textarea>
+      <button class="btn" style="background:#F3F1EB;color:var(--navy);margin-top:6px;" onclick="parseJsonPaste()">JSON 불러오기</button>
+      <hr style="margin:18px 0;border:none;border-top:1px solid var(--line);">
+      <label>요리 이름 *</label>
+      <input id="f_name" type="text">
+      <label>한 줄 소개</label>
+      <input id="f_summary" type="text">
+      <label>난이도 / 소요시간 / 인분</label>
+      <div style="display:flex; gap:8px;">
+        <input id="f_difficulty" placeholder="쉬움" style="flex:1;">
+        <input id="f_time" placeholder="20분" style="flex:1;">
+        <input id="f_servings" placeholder="2인분" style="flex:1;">
+      </div>
+      <label>재료 (한 줄에 하나, "이름 | 분량 | 비고")</label>
+      <textarea id="f_ingredients" placeholder="대구 | 400g | 마트 손질 생선코너"></textarea>
+      <label>조리 순서 (한 줄에 한 단계)</label>
+      <textarea id="f_steps"></textarea>
+      <label>영양 포인트 (한 줄에 하나)</label>
+      <textarea id="f_nutrition"></textarea>
+      <label>건강 고려사항 (한 줄에 하나)</label>
+      <textarea id="f_health_notes"></textarea>
+      <label>보관·활용 팁 (한 줄에 하나)</label>
+      <textarea id="f_tips"></textarea>
+      <label>맛 태그 (쉼표로 구분, 예: 얼큰함, 시원한 국물)</label>
+      <input id="f_tag_taste" type="text">
+      <label>건강 태그 (쉼표로 구분, 예: 저염, 고단백)</label>
+      <input id="f_tag_health" type="text">
+      <div class="form-actions">
+        <button class="btn btn-save" onclick="saveRecipeFromForm()">저장</button>
+        <button class="btn btn-cancel" onclick="closeModal('formOverlay')">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PIN Modal -->
+<div class="overlay" id="pinOverlay">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('pinOverlay')" style="color:#333;background:rgba(0,0,0,0.08);">✕</button>
+    <div class="pin-wrap">
+      <h2>기기 간 동기화</h2>
+      <p style="font-size:12px;color:#777;">같은 PIN을 입력하면 모든 기기에서 같은 레시피 목록을 볼 수 있어요.</p>
+      <input type="text" id="pinInput" maxlength="4" placeholder="PIN">
+      <div>
+        <button class="btn btn-save" style="width:120px;" onclick="pullFromCloud()">불러오기</button>
+        <button class="btn" style="width:120px;background:#F3F1EB;color:var(--navy);" onclick="pushToCloud()">저장하기</button>
+      </div>
+      <div class="sync-status" id="syncStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "https://recipe-book-api.yjjn2005.workers.dev";
+const TASTE_TAGS = ["담백함","든든함","고소함","얼큰함","매콤함","시원한 국물","살짝 달콤","새콤달콤"];
+const HEALTH_TAGS = ["저염","저당","고단백","저지방(간 건강)","소화가 편한"];
+
+const SEED_RECIPES = [
+  {
+    "id": "r001",
+    "name": "된장찌개",
+    "summary": "구수한 된장 하나로 완성하는 가장 기본적인 찌개",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "된장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "두부",
+        "amount": "1/2모",
+        "note": ""
+      },
+      {
+        "item": "애호박",
+        "amount": "1/3개",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "2컵",
+        "note": "또는 물+멸치다시팩"
+      }
+    ],
+    "steps": [
+      "멸치육수를 끓인다.",
+      "된장을 풀어 넣는다.",
+      "두부, 애호박, 양파를 넣고 10분간 끓인다.",
+      "대파를 넣고 마무리한다."
+    ],
+    "nutrition": [
+      "단백질(두부)과 발효식품 섭취",
+      "1인분 약 120kcal"
+    ],
+    "health_notes": [
+      "된장 자체 염분이 있어 소금은 따로 넣지 않는 것이 좋음",
+      "건더기 위주로 먹고 국물은 적당히"
+    ],
+    "tips": [
+      "냉장 2일 보관 가능",
+      "밥에 비벼 먹어도 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "든든함"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r002",
+    "name": "김치찌개",
+    "summary": "묵은지로 깊은 맛을 내는 대표 찌개",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "신김치",
+        "amount": "1과1/2컵",
+        "note": ""
+      },
+      {
+        "item": "돼지고기(앞다리)",
+        "amount": "150g",
+        "note": ""
+      },
+      {
+        "item": "두부",
+        "amount": "1/2모",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "1대",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "돼지고기를 볶다가 김치를 넣고 함께 볶는다.",
+      "물을 붓고 15분간 끓인다.",
+      "두부를 넣고 5분 더 끓인다.",
+      "대파를 올려 마무리한다."
+    ],
+    "nutrition": [
+      "비타민(김치)과 단백질(돼지고기, 두부)",
+      "1인분 약 280kcal"
+    ],
+    "health_notes": [
+      "신김치 자체 염분이 높은 편 — 물을 넉넉히 넣어 국물 농도를 묽게 조절 권장",
+      "돼지고기는 기름기 적은 부위 선택 시 지방 섭취 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 3일 보관, 끓일수록 맛이 깊어짐",
+      "참치김치찌개로 응용 가능"
+    ],
+    "tags": {
+      "taste": [
+        "얼큰함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r003",
+    "name": "순두부찌개",
+    "summary": "부드러운 순두부로 속을 편하게 하는 찌개",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "1~2인분",
+    "ingredients": [
+      {
+        "item": "순두부",
+        "amount": "1봉",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "애호박",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1/2큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "육수에 고춧가루, 다진마늘을 넣고 끓인다.",
+      "애호박을 넣고 끓인다.",
+      "순두부를 통째로 넣고 3분 끓인다.",
+      "계란을 풀어 넣고 한소끔 더 끓인다."
+    ],
+    "nutrition": [
+      "고단백 저지방 두부요리",
+      "1인분 약 160kcal"
+    ],
+    "health_notes": [
+      "맵기를 줄이면 소화가 더 편함",
+      "소금 대신 국간장 소량으로 간 조절 권장"
+    ],
+    "tips": [
+      "당일 소비 권장(순두부는 보관성 낮음)",
+      "밥 말아 먹기 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "얼큰함"
+      ],
+      "health": [
+        "소화가 편한",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r004",
+    "name": "대구탕",
+    "summary": "얼큰하고 시원한 국물의 대표 보양식",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "대구",
+        "amount": "400g",
+        "note": "마트 손질 생선코너"
+      },
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "콩나물",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "냄비에 물 4컵, 무를 넣고 끓인다.",
+      "대구, 콩나물, 다진마늘, 고춧가루를 넣고 10분간 끓인다.",
+      "소금으로 간을 맞추고 대파를 올려 마무리한다."
+    ],
+    "nutrition": [
+      "고단백 저지방 흰살생선 요리",
+      "1인분 약 200kcal"
+    ],
+    "health_notes": [
+      "국물 염분이 높은 편 — 소금 대신 마늘·후추로 간 조절 권장",
+      "고춧가루량을 줄이면 위에 더 편함"
+    ],
+    "tips": [
+      "남은 국물은 라면 육수로 재활용 가능",
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "시원한 국물",
+        "얼큰함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r005",
+    "name": "동태찌개",
+    "summary": "얼큰한 국물에 감자까지 든든한 생선찌개",
+    "difficulty": "쉬움",
+    "time": "25분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "동태(손질)",
+        "amount": "400g",
+        "note": ""
+      },
+      {
+        "item": "감자",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "무와 감자를 먼저 넣고 끓인다.",
+      "동태, 고춧가루, 다진마늘을 넣고 15분간 끓인다.",
+      "소금으로 간을 맞춘다."
+    ],
+    "nutrition": [
+      "고단백 저지방 생선요리, 감자로 포만감",
+      "1인분 약 230kcal"
+    ],
+    "health_notes": [
+      "국물 염분 높은 편 — 국물보다 건더기 위주로 섭취 권장"
+    ],
+    "tips": [
+      "냉장 2일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "얼큰함",
+        "든든함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r006",
+    "name": "육개장",
+    "summary": "얼큰하고 든든한 소고기 국",
+    "difficulty": "보통",
+    "time": "40분",
+    "servings": "3인분",
+    "ingredients": [
+      {
+        "item": "소고기 양지",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "3대",
+        "note": ""
+      },
+      {
+        "item": "고사리",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "숙주",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "2큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "양지를 물에 삶아 육수를 낸다.",
+      "고기를 찢고 대파, 고사리, 숙주를 넣는다.",
+      "고춧가루, 다진마늘로 간을 하고 20분 더 끓인다."
+    ],
+    "nutrition": [
+      "고단백 보양식, 철분 풍부",
+      "1인분 약 320kcal"
+    ],
+    "health_notes": [
+      "국물 염분이 높은 편 — 소금 최소화하고 고춧가루·마늘로 맛 보완",
+      "기름기는 식힌 후 걷어내면 지방 섭취 줄일 수 있음"
+    ],
+    "tips": [
+      "한 번에 넉넉히 끓여 냉동 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "얼큰함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r007",
+    "name": "미역국",
+    "summary": "산모부터 생일상까지, 담백한 국민 국",
+    "difficulty": "쉬움",
+    "time": "25분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "건미역",
+        "amount": "20g",
+        "note": ""
+      },
+      {
+        "item": "소고기(국거리)",
+        "amount": "100g",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "미역을 물에 불려 잘라둔다.",
+      "소고기를 참기름에 볶다가 미역을 넣고 함께 볶는다.",
+      "물을 붓고 20분간 끓인 뒤 국간장으로 간한다."
+    ],
+    "nutrition": [
+      "요오드·미네랄 풍부, 저지방 단백질",
+      "1인분 약 150kcal"
+    ],
+    "health_notes": [
+      "국간장 양만 조절하면 나트륨 부담이 적은 편",
+      "소고기 대신 들깨미역국으로 응용하면 더 고소함"
+    ],
+    "tips": [
+      "냉장 2일, 끓일수록 맛이 우러남"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r008",
+    "name": "콩나물국",
+    "summary": "해장에도 좋은 개운한 국",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "콩나물",
+        "amount": "1봉",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "1/2대",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "약간",
+        "note": "선택"
+      }
+    ],
+    "steps": [
+      "물에 콩나물을 넣고 뚜껑 덮고 끓인다.",
+      "다진마늘, 소금으로 간한다.",
+      "대파를 넣고 마무리한다."
+    ],
+    "nutrition": [
+      "비타민C, 아스파라긴산 풍부, 저칼로리",
+      "1인분 약 40kcal"
+    ],
+    "health_notes": [
+      "소금을 적게 넣고 마늘로 감칠맛 내면 나트륨 부담 적음"
+    ],
+    "tips": [
+      "뚜껑 자주 열면 비린내 날 수 있어 주의"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "시원한 국물"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r009",
+    "name": "북엇국",
+    "summary": "해장과 아침 식사로 좋은 담백한 국",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "황태채",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "황태채를 참기름에 볶는다.",
+      "물을 붓고 10분 끓인다.",
+      "계란을 풀어 넣고 국간장으로 간한다."
+    ],
+    "nutrition": [
+      "고단백 저지방, 숙취 해소에 도움되는 아미노산",
+      "1인분 약 130kcal"
+    ],
+    "health_notes": [
+      "국간장 대신 소금 소량으로 조절하면 더 담백함"
+    ],
+    "tips": [
+      "아침 식사로 간편"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r010",
+    "name": "감자탕",
+    "summary": "뼈해장국으로도 불리는 든든한 국물요리",
+    "difficulty": "보통",
+    "time": "1시간",
+    "servings": "3인분",
+    "ingredients": [
+      {
+        "item": "돼지등뼈",
+        "amount": "600g",
+        "note": ""
+      },
+      {
+        "item": "감자",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "우거지",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "들깨가루",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "등뼈를 데쳐 핏물을 뺀다.",
+      "물을 넉넉히 붓고 40분 이상 끓인다.",
+      "감자, 우거지, 양념을 넣고 20분 더 끓인다."
+    ],
+    "nutrition": [
+      "고단백, 콜라겐 풍부",
+      "1인분 약 400kcal"
+    ],
+    "health_notes": [
+      "국물 기름기를 걷어내면 포화지방 섭취를 줄일 수 있음",
+      "국물보다 고기·채소 위주로 섭취 권장"
+    ],
+    "tips": [
+      "한 번 끓여 여러 끼 나눠 먹기 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "든든함",
+        "얼큰함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r011",
+    "name": "갈비탕",
+    "summary": "맑고 깊은 국물의 보양식",
+    "difficulty": "보통",
+    "time": "1시간 (압력솥 40분)",
+    "servings": "3인분",
+    "ingredients": [
+      {
+        "item": "소갈비",
+        "amount": "500g",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "2대",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "2큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "갈비를 찬물에 담가 핏물을 뺀다.",
+      "끓는 물에 데친 뒤 씻는다.",
+      "압력솥에 갈비, 무, 물을 넣고 40분간 끓인다.",
+      "국간장, 다진마늘로 간한다."
+    ],
+    "nutrition": [
+      "고단백, 콜라겐 풍부",
+      "1인분 약 350kcal"
+    ],
+    "health_notes": [
+      "기름기를 식힌 뒤 걷어내면 포화지방 섭취를 크게 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 보관 후 기름 굳혀서 제거하면 더 깔끔함"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r012",
+    "name": "삼계탕",
+    "summary": "여름 보양식의 대표주자",
+    "difficulty": "보통",
+    "time": "1시간",
+    "servings": "1~2인분",
+    "ingredients": [
+      {
+        "item": "영계",
+        "amount": "1마리",
+        "note": ""
+      },
+      {
+        "item": "찹쌀",
+        "amount": "1/2컵",
+        "note": ""
+      },
+      {
+        "item": "마늘",
+        "amount": "5쪽",
+        "note": ""
+      },
+      {
+        "item": "대추",
+        "amount": "3개",
+        "note": ""
+      },
+      {
+        "item": "황기(선택)",
+        "amount": "1뿌리",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "찹쌀을 불려둔다.",
+      "닭 속에 찹쌀, 마늘, 대추를 채운다.",
+      "물을 붓고 1시간 정도 푹 끓인다."
+    ],
+    "nutrition": [
+      "고단백 저지방(껍질 제거 시), 원기 보충",
+      "1인분 약 450kcal"
+    ],
+    "health_notes": [
+      "닭껍질을 제거하고 드시면 지방 섭취를 크게 줄일 수 있음",
+      "국물의 소금은 최소화하고 소금장은 따로 곁들여 조절 권장"
+    ],
+    "tips": [
+      "압력솥 이용 시 30분으로 단축 가능"
+    ],
+    "tags": {
+      "taste": [
+        "든든함",
+        "담백함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r013",
+    "name": "시금치된장국",
+    "summary": "향긋한 시금치가 들어간 구수한 된장국",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "시금치",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "된장",
+        "amount": "1과1/2큰술",
+        "note": ""
+      },
+      {
+        "item": "두부",
+        "amount": "1/4모",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "2컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수에 된장을 푼다.",
+      "두부를 넣고 끓인다.",
+      "시금치를 넣고 2분만 더 끓인다."
+    ],
+    "nutrition": [
+      "철분·엽산(시금치) 풍부, 저칼로리",
+      "1인분 약 80kcal"
+    ],
+    "health_notes": [
+      "시금치를 오래 끓이지 않아야 영양소 손실이 적음"
+    ],
+    "tips": [
+      "아침 국으로 부담 없음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r014",
+    "name": "무국",
+    "summary": "맑고 시원한 기본 국",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "소고기(국거리)",
+        "amount": "80g",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "소고기를 참기름에 볶다가 무를 넣고 함께 볶는다.",
+      "물을 붓고 15분간 끓인다.",
+      "국간장으로 간한다."
+    ],
+    "nutrition": [
+      "저칼로리, 비타민C(무) 풍부",
+      "1인분 약 100kcal"
+    ],
+    "health_notes": [
+      "국간장 양을 줄이고 마늘로 감칠맛 보완하면 나트륨 부담 적음"
+    ],
+    "tips": [
+      "소화가 잘 돼 아침 국으로 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "시원한 국물"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r015",
+    "name": "유부된장국",
+    "summary": "유부로 감칠맛을 더한 된장국",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "유부",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "된장",
+        "amount": "1과1/2큰술",
+        "note": ""
+      },
+      {
+        "item": "애호박",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "2컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수에 된장을 푼다.",
+      "애호박, 유부를 넣고 10분간 끓인다."
+    ],
+    "nutrition": [
+      "단백질(유부) 보충, 담백한 맛",
+      "1인분 약 110kcal"
+    ],
+    "health_notes": [
+      "유부는 뜨거운 물에 한 번 헹궈 기름기를 빼면 더 담백함"
+    ],
+    "tips": [
+      "아침 국으로 빠르게 완성 가능"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r016",
+    "name": "어묵탕",
+    "summary": "쌀쌀할 때 생각나는 따뜻한 국물",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "어묵",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/6개",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "1대",
+        "note": ""
+      },
+      {
+        "item": "다시마",
+        "amount": "2장",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "다시마와 무로 육수를 낸다.",
+      "어묵을 넣고 10분간 끓인다.",
+      "국간장으로 간하고 대파를 올린다."
+    ],
+    "nutrition": [
+      "단백질 보충, 간단한 국물요리",
+      "1인분 약 180kcal"
+    ],
+    "health_notes": [
+      "어묵 자체 나트륨이 있어 국간장은 적게 넣는 것을 권장"
+    ],
+    "tips": [
+      "남은 국물은 라면 육수로 활용 가능"
+    ],
+    "tags": {
+      "taste": [
+        "시원한 국물",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r017",
+    "name": "부대찌개",
+    "summary": "햄과 소시지로 든든하게 즐기는 찌개",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "김치",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "햄",
+        "amount": "150g",
+        "note": ""
+      },
+      {
+        "item": "소시지",
+        "amount": "100g",
+        "note": ""
+      },
+      {
+        "item": "두부",
+        "amount": "1/2모",
+        "note": ""
+      },
+      {
+        "item": "라면사리(선택)",
+        "amount": "1개",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "냄비에 김치, 햄, 소시지, 두부를 순서대로 담는다.",
+      "육수를 붓고 끓인다.",
+      "고춧가루, 다진마늘로 간한다."
+    ],
+    "nutrition": [
+      "단백질 풍부, 든든한 한 끼",
+      "1인분 약 400kcal(라면사리 제외)"
+    ],
+    "health_notes": [
+      "가공육(햄·소시지) 나트륨이 높은 편 — 국물은 적게 드시고 건더기 위주로 섭취 권장",
+      "라면사리를 빼면 칼로리와 나트륨을 크게 줄일 수 있음"
+    ],
+    "tips": [
+      "채소를 더 넣으면 영양 균형이 좋아짐"
+    ],
+    "tags": {
+      "taste": [
+        "얼큰함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r018",
+    "name": "청국장찌개",
+    "summary": "구수하고 영양 풍부한 발효식품 찌개",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "청국장",
+        "amount": "1팩",
+        "note": ""
+      },
+      {
+        "item": "김치",
+        "amount": "1/2컵",
+        "note": ""
+      },
+      {
+        "item": "두부",
+        "amount": "1/4모",
+        "note": ""
+      },
+      {
+        "item": "돼지고기(선택)",
+        "amount": "50g",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "1과1/2컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수에 김치, 돼지고기를 넣고 끓인다.",
+      "두부를 넣고 끓인다.",
+      "청국장을 풀어 넣고 5분만 더 끓인다."
+    ],
+    "nutrition": [
+      "발효식품, 식이섬유·단백질 풍부",
+      "1인분 약 200kcal"
+    ],
+    "health_notes": [
+      "청국장은 오래 끓이면 유익균이 줄어드니 마지막에 넣고 짧게 끓이는 것을 권장",
+      "자체 염도가 있어 소금은 넣지 않는 것이 좋음"
+    ],
+    "tips": [
+      "냄새가 부담스러우면 마늘을 더해 중화 가능"
+    ],
+    "tags": {
+      "taste": [
+        "고소함",
+        "든든함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r019",
+    "name": "계란국",
+    "summary": "가장 빠르게 끓이는 부드러운 국",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "계란",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "1/2대",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "2컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수를 끓인다.",
+      "국간장으로 간한다.",
+      "계란을 풀어 넣고 젓가락으로 저어가며 익힌다."
+    ],
+    "nutrition": [
+      "고단백 저칼로리, 소화 부담 적음",
+      "1인분 약 90kcal"
+    ],
+    "health_notes": [
+      "국간장을 적게 넣으면 나트륨 부담을 줄일 수 있음"
+    ],
+    "tips": [
+      "10분 안에 완성, 입맛 없을 때 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "소화가 편한",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r020",
+    "name": "배추된장국",
+    "summary": "시원하고 구수한 배춧국",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "배추",
+        "amount": "4장",
+        "note": ""
+      },
+      {
+        "item": "된장",
+        "amount": "1과1/2큰술",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "2컵",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수에 된장을 푼다.",
+      "배추를 넣고 부드러워질 때까지 끓인다.",
+      "다진마늘을 넣고 마무리한다."
+    ],
+    "nutrition": [
+      "식이섬유 풍부, 저칼로리",
+      "1인분 약 70kcal"
+    ],
+    "health_notes": [
+      "된장 자체 염도가 있어 추가 소금은 넣지 않는 것이 좋음"
+    ],
+    "tips": [
+      "소화가 잘 되어 저녁 국으로 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "시원한 국물"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r021",
+    "name": "제육볶음",
+    "summary": "매콤달콤 한국인 최애 볶음 반찬",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "돼지고기(앞다리, 슬라이스)",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1과1/2큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "양념 재료를 섞어 고기를 재운다(10분).",
+      "팬에 고기를 볶는다.",
+      "양파를 넣고 센 불에 마저 볶는다."
+    ],
+    "nutrition": [
+      "고단백, 든든한 한 끼 반찬",
+      "1인분 약 350kcal"
+    ],
+    "health_notes": [
+      "고추장·설탕 양을 줄이면 나트륨·당 부담을 줄일 수 있음",
+      "기름기 적은 부위(앞다리) 선택 시 지방 섭취 감소"
+    ],
+    "tips": [
+      "상추쌈과 함께 먹으면 좋음",
+      "냉장 2일 보관"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r022",
+    "name": "오징어볶음",
+    "summary": "쫄깃한 오징어와 매콤한 양념의 조화",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "오징어",
+        "amount": "1마리",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "오징어를 손질해 링 모양으로 썬다.",
+      "야채를 볶다가 오징어를 넣고 센 불에 볶는다.",
+      "양념을 넣고 재빨리 볶아 마무리한다."
+    ],
+    "nutrition": [
+      "저지방 고단백, 타우린 풍부",
+      "1인분 약 220kcal"
+    ],
+    "health_notes": [
+      "센 불에서 짧게 볶아야 질겨지지 않고 소화도 편함"
+    ],
+    "tips": [
+      "오징어는 살짝 데친 뒤 볶으면 더 부드러움"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r023",
+    "name": "소고기볶음",
+    "summary": "간단하지만 든든한 소고기 반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "소고기(불고기용)",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "설탕",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "양념을 섞어 고기를 재운다.",
+      "팬에 고기와 양파를 함께 볶는다."
+    ],
+    "nutrition": [
+      "고단백, 철분 풍부",
+      "1인분 약 300kcal"
+    ],
+    "health_notes": [
+      "간장·설탕을 줄이고 마늘·후추로 감칠맛을 보완하면 나트륨·당 부담이 적음"
+    ],
+    "tips": [
+      "도시락 반찬으로도 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "든든함",
+        "살짝 달콤"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r024",
+    "name": "감자볶음",
+    "summary": "짭짤하고 고소한 밑반찬 대표주자",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "감자",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "1/2작은술",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "감자를 채 썰어 물에 담가 전분기를 뺀다.",
+      "팬에 기름을 두르고 감자, 당근, 양파를 볶는다.",
+      "소금으로 간한다."
+    ],
+    "nutrition": [
+      "탄수화물·비타민C(감자) 공급원",
+      "1인분 약 150kcal"
+    ],
+    "health_notes": [
+      "소금을 적게 넣고 후추로 맛을 살리면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 3일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저염"
+      ]
+    }
+  },
+  {
+    "id": "r025",
+    "name": "어묵볶음",
+    "summary": "달콤짭짤한 밑반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "어묵",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "설탕",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "어묵을 한입 크기로 썬다.",
+      "팬에 어묵, 양파를 볶는다.",
+      "양념을 넣고 볶아 마무리한다."
+    ],
+    "nutrition": [
+      "단백질 보충, 밑반찬으로 활용도 높음",
+      "1인분 약 180kcal"
+    ],
+    "health_notes": [
+      "어묵 자체 나트륨이 있어 간장은 최소화하는 것을 권장",
+      "기름에 데치지 않고 볶으면 지방 섭취 줄어듦"
+    ],
+    "tips": [
+      "도시락 반찬으로 좋음, 냉장 3일"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤",
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r026",
+    "name": "멸치볶음",
+    "summary": "칼슘 보충에 좋은 국민 밑반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "잔멸치",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "올리고당",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "견과류(선택)",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "마른 팬에 멸치를 살짝 볶아 비린내를 뺀다.",
+      "기름을 두르고 간장, 올리고당을 넣어 볶는다."
+    ],
+    "nutrition": [
+      "칼슘·단백질 풍부",
+      "1인분(밑반찬) 약 60kcal"
+    ],
+    "health_notes": [
+      "간장 양을 줄이면 나트륨 부담이 적은 밑반찬이 됨"
+    ],
+    "tips": [
+      "밀폐용기에 1주일 이상 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r027",
+    "name": "진미채볶음",
+    "summary": "쫄깃하고 매콤달콤한 밑반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "진미채",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "올리고당",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "마요네즈(선택)",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "진미채를 물에 살짝 불려 짠맛을 뺀다.",
+      "양념을 섞어 진미채와 버무린 뒤 살짝 볶는다."
+    ],
+    "nutrition": [
+      "고단백 저지방 밑반찬",
+      "1인분(밑반찬) 약 90kcal"
+    ],
+    "health_notes": [
+      "물에 불려 짠기를 빼면 나트륨 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "밀폐용기에 1주일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤",
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r028",
+    "name": "콩나물무침",
+    "summary": "아삭하고 개운한 기본 나물",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "콩나물",
+        "amount": "1봉",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "1/2작은술",
+        "note": ""
+      },
+      {
+        "item": "깨소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "콩나물을 끓는 물에 데친다.",
+      "찬물에 헹궈 물기를 뺀다.",
+      "양념과 함께 무친다."
+    ],
+    "nutrition": [
+      "비타민C·식이섬유 풍부, 저칼로리",
+      "1인분(밑반찬) 약 30kcal"
+    ],
+    "health_notes": [
+      "소금을 최소화하고 참기름·마늘 향으로 맛을 살리면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 3일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저염",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r029",
+    "name": "시금치나물",
+    "summary": "향긋하고 부드러운 대표 나물",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "시금치",
+        "amount": "1단",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "깨소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "시금치를 끓는 물에 살짝 데친다.",
+      "찬물에 헹궈 물기를 꼭 짠다.",
+      "양념과 함께 무친다."
+    ],
+    "nutrition": [
+      "철분·엽산 풍부, 저칼로리",
+      "1인분(밑반찬) 약 35kcal"
+    ],
+    "health_notes": [
+      "짧게 데치면 영양 손실이 적음"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r030",
+    "name": "고사리나물",
+    "summary": "제사상에도 오르는 구수한 나물",
+    "difficulty": "보통",
+    "time": "30분(불리기 별도)",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "삶은 고사리",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "들기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "고사리를 먹기 좋게 썬다.",
+      "들기름에 볶다가 국간장, 마늘을 넣고 볶는다.",
+      "물을 약간 넣고 부드럽게 볶는다."
+    ],
+    "nutrition": [
+      "식이섬유 풍부",
+      "1인분(밑반찬) 약 50kcal"
+    ],
+    "health_notes": [
+      "들기름은 오메가3가 풍부해 식용유 대신 사용 권장"
+    ],
+    "tips": [
+      "냉장 3일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r031",
+    "name": "도라지무침",
+    "summary": "아삭하고 알싸한 건강 나물",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "손질 도라지",
+        "amount": "150g",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "식초",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "설탕",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "도라지를 소금으로 주물러 쓴맛을 뺀 뒤 헹군다.",
+      "끓는 물에 살짝 데친다.",
+      "양념과 함께 무친다."
+    ],
+    "nutrition": [
+      "식이섬유·사포닌 풍부, 기관지에 도움",
+      "1인분(밑반찬) 약 45kcal"
+    ],
+    "health_notes": [
+      "식초를 활용하면 소금을 줄여도 감칠맛을 살릴 수 있음"
+    ],
+    "tips": [
+      "냉장 3일 보관"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r032",
+    "name": "오이무침",
+    "summary": "아삭하고 새콤한 여름 밑반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "오이",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "식초",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "설탕",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "오이를 얇게 썰어 소금에 살짝 절인다.",
+      "물기를 짠 뒤 양념과 버무린다."
+    ],
+    "nutrition": [
+      "수분·비타민 풍부, 저칼로리",
+      "1인분(밑반찬) 약 25kcal"
+    ],
+    "health_notes": [
+      "식초의 신맛으로 소금 사용을 줄일 수 있어 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "여름철 입맛 살리기 좋음, 무친 당일 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "새콤달콤"
+      ],
+      "health": [
+        "저당",
+        "저염"
+      ]
+    }
+  },
+  {
+    "id": "r033",
+    "name": "가지나물",
+    "summary": "부드럽고 담백한 여름 나물",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "가지",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "깨소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "가지를 찜기에 5분 찐다.",
+      "한 김 식혀 손으로 찢는다.",
+      "양념과 함께 무친다."
+    ],
+    "nutrition": [
+      "식이섬유 풍부, 저칼로리",
+      "1인분(밑반찬) 약 30kcal"
+    ],
+    "health_notes": [
+      "기름에 볶지 않고 찌면 지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r034",
+    "name": "애호박볶음",
+    "summary": "부드럽고 고소한 밑반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "애호박",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "새우젓",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "애호박을 반달모양으로 썬다.",
+      "팬에 볶다가 새우젓, 마늘로 간한다."
+    ],
+    "nutrition": [
+      "비타민A·식이섬유 풍부, 저칼로리",
+      "1인분(밑반찬) 약 45kcal"
+    ],
+    "health_notes": [
+      "새우젓을 소량만 사용하면 나트륨 부담을 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저염",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r035",
+    "name": "버섯볶음",
+    "summary": "향긋하고 저칼로리인 건강 반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "느타리버섯",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "새송이버섯",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "버섯을 손으로 찢거나 썬다.",
+      "팬에 볶다가 양념으로 간한다."
+    ],
+    "nutrition": [
+      "식이섬유·비타민D 풍부, 저칼로리",
+      "1인분 약 50kcal"
+    ],
+    "health_notes": [
+      "기름을 적게 쓰고 마지막에 참기름을 살짝 둘러 향만 내면 담백함"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r036",
+    "name": "계란말이",
+    "summary": "누구나 좋아하는 도시락 단골 반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "계란",
+        "amount": "3개",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "1/4작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "계란을 풀어 야채, 소금을 섞는다.",
+      "팬에 얇게 부어가며 돌돌 말아 익힌다."
+    ],
+    "nutrition": [
+      "고단백, 간편한 반찬",
+      "1인분 약 150kcal"
+    ],
+    "health_notes": [
+      "소금을 최소화해도 야채 향으로 충분히 맛있음"
+    ],
+    "tips": [
+      "도시락 반찬으로 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백",
+        "저염"
+      ]
+    }
+  },
+  {
+    "id": "r037",
+    "name": "스팸구이",
+    "summary": "짭짤하고 간편한 밥도둑 반찬",
+    "difficulty": "쉬움",
+    "time": "5분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "스팸",
+        "amount": "1/2캔",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "스팸을 도톰하게 썬다.",
+      "기름 없이 또는 약간만 둘러 노릇하게 굽는다."
+    ],
+    "nutrition": [
+      "고단백, 간편식",
+      "1인분 약 250kcal"
+    ],
+    "health_notes": [
+      "가공육이라 나트륨·포화지방이 높은 편 — 끓는 물에 살짝 데쳐 기름기를 빼고 구우면 부담을 줄일 수 있음",
+      "자주 먹기보다 가끔 즐기는 반찬으로 권장"
+    ],
+    "tips": [
+      "계란과 함께 구우면 더 든든함"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r038",
+    "name": "참치김치볶음",
+    "summary": "간단하면서 든든한 밑반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "김치",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "참치캔",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "1/2대",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "김치를 볶다가 참치를 기름을 뺀 뒤 넣는다.",
+      "함께 볶아 마무리한다."
+    ],
+    "nutrition": [
+      "단백질(참치), 비타민(김치)",
+      "1인분 약 200kcal"
+    ],
+    "health_notes": [
+      "참치캔의 기름을 완전히 빼면 지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 3일 보관"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r039",
+    "name": "닭볶음탕",
+    "summary": "매콤달콤 감자와 함께 즐기는 든든한 요리",
+    "difficulty": "보통",
+    "time": "35분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "닭볶음탕용 닭",
+        "amount": "700g",
+        "note": ""
+      },
+      {
+        "item": "감자",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "닭을 끓는 물에 데쳐 기름기를 뺀다.",
+      "양념, 물과 함께 20분 끓인다.",
+      "감자, 당근을 넣고 15분 더 끓인다."
+    ],
+    "nutrition": [
+      "고단백, 든든한 한 끼",
+      "1인분 약 400kcal"
+    ],
+    "health_notes": [
+      "닭껍질을 제거하면 지방 섭취를 크게 줄일 수 있음",
+      "고추장·설탕을 줄이면 당·나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 2~3일 보관, 다음날이 더 맛있음"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r040",
+    "name": "잡채",
+    "summary": "명절과 잔치의 대표 요리, 색색의 영양 만점 반찬",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "3~4인분",
+    "ingredients": [
+      {
+        "item": "당면",
+        "amount": "150g",
+        "note": ""
+      },
+      {
+        "item": "소고기(채썬 것)",
+        "amount": "100g",
+        "note": ""
+      },
+      {
+        "item": "시금치",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "3큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "당면을 삶아 둔다.",
+      "각 채소와 고기를 따로 볶는다.",
+      "당면과 함께 간장 양념으로 버무린다."
+    ],
+    "nutrition": [
+      "다양한 채소로 영양 균형 좋음",
+      "1인분 약 320kcal"
+    ],
+    "health_notes": [
+      "간장·설탕을 줄이면 나트륨·당 부담을 낮출 수 있음",
+      "당면 양을 줄이고 채소를 늘리면 더 건강한 구성"
+    ],
+    "tips": [
+      "명절 아니어도 소량으로 만들어 반찬처럼 즐기기 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤",
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r041",
+    "name": "돼지불고기",
+    "summary": "달콤짭짤한 밥도둑 볶음 반찬",
+    "difficulty": "쉬움",
+    "time": "20분(재우기 포함)",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "돼지고기(불고기용)",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "배즙",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "양념에 고기를 20분 재운다.",
+      "팬에 고기와 양파를 볶는다."
+    ],
+    "nutrition": [
+      "고단백, 든든한 반찬",
+      "1인분 약 350kcal"
+    ],
+    "health_notes": [
+      "설탕 대신 배즙으로 단맛을 내면 혈당 부담이 적음",
+      "기름기 적은 부위 선택 시 지방 섭취 감소"
+    ],
+    "tips": [
+      "상추쌈과 함께 먹으면 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r042",
+    "name": "소불고기",
+    "summary": "명절과 손님상에도 어울리는 고급 볶음",
+    "difficulty": "보통",
+    "time": "20분(재우기 포함)",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "소고기(불고기용)",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "3큰술",
+        "note": ""
+      },
+      {
+        "item": "배즙",
+        "amount": "2큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "양념에 고기를 20분 재운다.",
+      "팬에 고기, 양파, 당근을 함께 볶는다."
+    ],
+    "nutrition": [
+      "고단백, 철분 풍부",
+      "1인분 약 380kcal"
+    ],
+    "health_notes": [
+      "간장·설탕량을 줄이고 배즙 비중을 늘리면 당·나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 2일 보관"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r043",
+    "name": "갈비찜",
+    "summary": "압력솥으로 40분이면 되는 초간단 버전",
+    "difficulty": "쉬움",
+    "time": "40분(압력솥 기준)",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "찜갈비용 소갈비",
+        "amount": "600g",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "5큰술",
+        "note": "저염간장 권장"
+      },
+      {
+        "item": "배 또는 양파즙",
+        "amount": "1/2컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "갈비는 찬물에 30분 담가 핏물을 뺀다.",
+      "끓는 물에 5분간 데친다.",
+      "압력솥에 갈비, 간장, 배즙, 마늘, 물 2컵을 넣고 끓인다.",
+      "무, 당근을 넣고 10분 더 졸인다."
+    ],
+    "nutrition": [
+      "고단백, 철분·아연 풍부",
+      "1인분(200g) 약 420kcal"
+    ],
+    "health_notes": [
+      "간장을 줄이고 저염간장으로 바꾸면 나트륨 부담이 적음",
+      "흰 지방을 제거하면 포화지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 3일, 냉동 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "든든함",
+        "살짝 달콤"
+      ],
+      "health": [
+        "고단백",
+        "저지방(간 건강)"
+      ]
+    }
+  },
+  {
+    "id": "r044",
+    "name": "두부조림",
+    "summary": "짭조름하고 부드러운 밑반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "두부",
+        "amount": "1모",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "1/2대",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "두부를 도톰하게 썰어 앞뒤로 노릇하게 굽는다.",
+      "양념을 부어 조린다."
+    ],
+    "nutrition": [
+      "고단백 저지방 식물성 단백질",
+      "1인분 약 180kcal"
+    ],
+    "health_notes": [
+      "기름을 적게 두르고 구우면 지방 섭취를 줄일 수 있음",
+      "간장 양을 줄이면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 3일 보관"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r045",
+    "name": "감자조림",
+    "summary": "달콤짭짤한 밥반찬",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "감자",
+        "amount": "3개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "올리고당",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "감자를 한입 크기로 썬다.",
+      "기름에 살짝 볶다가 물과 간장을 넣고 조린다.",
+      "올리고당을 넣어 윤기나게 마무리한다."
+    ],
+    "nutrition": [
+      "탄수화물·비타민C 공급원",
+      "1인분 약 200kcal"
+    ],
+    "health_notes": [
+      "간장·올리고당을 줄이면 당·나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 4일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤"
+      ],
+      "health": [
+        "저염"
+      ]
+    }
+  },
+  {
+    "id": "r046",
+    "name": "장조림",
+    "summary": "밑반찬의 스테디셀러",
+    "difficulty": "보통",
+    "time": "40분",
+    "servings": "4~5인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "소고기(홍두깨살)",
+        "amount": "400g",
+        "note": ""
+      },
+      {
+        "item": "메추리알",
+        "amount": "10개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "1/2컵",
+        "note": ""
+      },
+      {
+        "item": "마늘",
+        "amount": "5쪽",
+        "note": ""
+      },
+      {
+        "item": "물엿(선택)",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "소고기를 삶아 익힌다.",
+      "삶은 물에 간장, 마늘을 넣고 고기와 함께 조린다.",
+      "메추리알을 넣고 함께 조린다."
+    ],
+    "nutrition": [
+      "고단백 밑반찬, 오래 보관 가능",
+      "1인분(밑반찬) 약 150kcal"
+    ],
+    "health_notes": [
+      "간장 농도를 묽게 하고 여러 번 나눠 졸이면 나트륨 부담을 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 1주일 이상 보관 가능, 밥반찬으로 매일 조금씩"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r047",
+    "name": "연근조림",
+    "summary": "아삭하고 달콤한 건강 밑반찬",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "연근",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "올리고당",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "식초",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "연근을 얇게 썰어 식초물에 담가둔다.",
+      "간장, 물과 함께 조린다.",
+      "올리고당을 넣어 윤기나게 마무리한다."
+    ],
+    "nutrition": [
+      "식이섬유 풍부, 아삭한 식감",
+      "1인분(밑반찬) 약 90kcal"
+    ],
+    "health_notes": [
+      "간장·올리고당 양을 줄이면 당·나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 5일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤",
+        "고소함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r048",
+    "name": "우엉조림",
+    "summary": "고소하고 쫄깃한 뿌리채소 밑반찬",
+    "difficulty": "쉬움",
+    "time": "25분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "우엉",
+        "amount": "1대",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "올리고당",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "우엉을 채 썰어 식초물에 담가둔다.",
+      "기름에 볶다가 간장, 물을 넣고 졸인다."
+    ],
+    "nutrition": [
+      "식이섬유 풍부, 든든한 밑반찬",
+      "1인분(밑반찬) 약 80kcal"
+    ],
+    "health_notes": [
+      "간장 양을 줄이면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 1주일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r049",
+    "name": "메추리알장조림",
+    "summary": "도시락 인기 반찬",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "메추리알(삶은 것)",
+        "amount": "20개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "3큰술",
+        "note": ""
+      },
+      {
+        "item": "올리고당",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "마늘",
+        "amount": "3쪽",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "메추리알을 삶아 껍질을 깐다.",
+      "간장, 물, 마늘과 함께 조린다."
+    ],
+    "nutrition": [
+      "고단백 밑반찬",
+      "1인분(밑반찬) 약 120kcal"
+    ],
+    "health_notes": [
+      "간장 농도를 묽게 해 조리면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 1주일 보관 가능, 도시락에 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r050",
+    "name": "코다리조림",
+    "summary": "쫄깃한 코다리와 매콤한 양념의 조화",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "코다리",
+        "amount": "2마리",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "코다리를 손질해 토막낸다.",
+      "냄비에 무를 깔고 코다리를 올린다.",
+      "양념을 붓고 20분간 조린다."
+    ],
+    "nutrition": [
+      "고단백 저지방 생선요리",
+      "1인분 약 220kcal"
+    ],
+    "health_notes": [
+      "간장·고춧가루 양을 줄이면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r051",
+    "name": "갈치조림",
+    "summary": "칼칼하고 든든한 생선조림",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "갈치",
+        "amount": "2토막",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "냄비에 무를 깔고 갈치를 올린다.",
+      "양념을 붓고 끓인다.",
+      "중불에서 15분간 조린다."
+    ],
+    "nutrition": [
+      "고단백, 불포화지방산(오메가3) 풍부",
+      "1인분 약 280kcal"
+    ],
+    "health_notes": [
+      "국물은 적게, 생선살 위주로 드시면 나트륨 부담을 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r052",
+    "name": "고등어조림",
+    "summary": "비린내 걱정 없는 얼큰한 생선조림",
+    "difficulty": "보통",
+    "time": "25분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "고등어",
+        "amount": "2토막",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "다진생강",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "냄비에 무를 깔고 고등어를 올린다.",
+      "양념을 붓고 끓인다.",
+      "생강을 넣어 비린내를 잡으며 15분 조린다."
+    ],
+    "nutrition": [
+      "오메가3 지방산 풍부, 고단백",
+      "1인분 약 290kcal"
+    ],
+    "health_notes": [
+      "등푸른생선의 불포화지방산이 혈관 건강에 도움 — 다만 국물 염분은 적게 섭취 권장"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r053",
+    "name": "삼겹살구이",
+    "summary": "한국인이 사랑하는 회식·홈파티 메뉴",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "삼겹살",
+        "amount": "400g",
+        "note": ""
+      },
+      {
+        "item": "마늘",
+        "amount": "5쪽",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "상추(곁들임)",
+        "amount": "1줌",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "팬을 달군 뒤 삼겹살을 굽는다.",
+      "마늘을 함께 구워 곁들인다."
+    ],
+    "nutrition": [
+      "고단백, 비타민B1 풍부",
+      "1인분 약 450kcal"
+    ],
+    "health_notes": [
+      "기름을 충분히 빼면서 구우면 지방 섭취를 줄일 수 있음",
+      "상추쌈과 채소를 곁들이면 균형 잡힌 식사"
+    ],
+    "tips": [
+      "자주보다는 가끔 즐기는 메뉴로 권장"
+    ],
+    "tags": {
+      "taste": [
+        "고소함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r054",
+    "name": "고등어구이",
+    "summary": "밥도둑 국민 생선구이",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "고등어",
+        "amount": "1마리",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "고등어에 소금을 살짝 뿌려 10분 재운다.",
+      "팬이나 에어프라이어에 노릇하게 굽는다."
+    ],
+    "nutrition": [
+      "오메가3 지방산, 고단백",
+      "1인분 약 250kcal"
+    ],
+    "health_notes": [
+      "에어프라이어로 구우면 기름 사용을 줄일 수 있음",
+      "등푸른생선의 불포화지방은 혈관 건강에 도움"
+    ],
+    "tips": [
+      "레몬즙을 곁들이면 비린내가 줄어듦"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r055",
+    "name": "갈치구이",
+    "summary": "담백하고 고소한 흰살생선구이",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "갈치",
+        "amount": "2토막",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "갈치에 소금을 뿌려 재운다.",
+      "팬에 노릇하게 굽는다."
+    ],
+    "nutrition": [
+      "고단백 저지방 생선요리",
+      "1인분 약 200kcal"
+    ],
+    "health_notes": [
+      "소금 밑간을 최소화하면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "에어프라이어 이용 시 기름 없이도 바삭하게 조리 가능"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r056",
+    "name": "삼치구이",
+    "summary": "부드럽고 담백해 어르신도 좋아하는 생선",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "삼치",
+        "amount": "2토막",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "삼치에 소금을 살짝 뿌려 재운다.",
+      "팬에 노릇하게 굽는다."
+    ],
+    "nutrition": [
+      "고단백 저지방, 소화가 편한 흰살생선",
+      "1인분 약 210kcal"
+    ],
+    "health_notes": [
+      "가시가 적어 어르신 식사로도 적합"
+    ],
+    "tips": [
+      "에어프라이어로 구우면 더 담백함"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r057",
+    "name": "닭갈비",
+    "summary": "매콤달콤 철판 요리의 대표주자",
+    "difficulty": "보통",
+    "time": "30분(재우기 포함)",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "닭다리살",
+        "amount": "500g",
+        "note": ""
+      },
+      {
+        "item": "양배추",
+        "amount": "1/4통",
+        "note": ""
+      },
+      {
+        "item": "고구마",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "양념에 닭을 20분 재운다.",
+      "팬에 닭, 고구마를 먼저 볶는다.",
+      "양배추를 넣고 함께 볶는다."
+    ],
+    "nutrition": [
+      "고단백, 채소 함께 섭취 가능",
+      "1인분 약 380kcal"
+    ],
+    "health_notes": [
+      "닭껍질을 제거하면 지방 섭취를 줄일 수 있음",
+      "고추장·설탕량을 줄이면 당·나트륨 부담이 적음"
+    ],
+    "tips": [
+      "치즈를 곁들이면 별미지만 나트륨·지방이 늘어남에 유의"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r058",
+    "name": "닭가슴살구이",
+    "summary": "다이어트와 건강식으로 인기인 담백 구이",
+    "difficulty": "쉬움",
+    "time": "15분(재우기 포함)",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "닭가슴살",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "올리브유",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "소금·후추",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "마늘가루",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "닭가슴살에 소금, 후추, 마늘가루로 밑간한다.",
+      "팬에 노릇하게 굽는다."
+    ],
+    "nutrition": [
+      "고단백 저지방 대표 식품",
+      "1인분 약 220kcal"
+    ],
+    "health_notes": [
+      "기름을 최소화해 구우면 지방 섭취를 더 줄일 수 있음"
+    ],
+    "tips": [
+      "샐러드와 곁들이면 균형 잡힌 한 끼"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "고단백",
+        "저지방(간 건강)"
+      ]
+    }
+  },
+  {
+    "id": "r059",
+    "name": "소고기구이",
+    "summary": "특별한 날 즐기는 든든한 한 끼",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "소고기(구이용)",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "소금·후추",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "마늘",
+        "amount": "3쪽",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "소고기를 상온에 10분 둔다.",
+      "팬을 달궈 마늘과 함께 굽는다."
+    ],
+    "nutrition": [
+      "고단백, 철분·아연 풍부",
+      "1인분 약 400kcal"
+    ],
+    "health_notes": [
+      "기름기 적은 부위를 선택하면 포화지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "쌈채소와 함께 먹으면 균형 잡힌 식사"
+    ],
+    "tags": {
+      "taste": [
+        "든든함",
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r060",
+    "name": "훈제오리구이",
+    "summary": "쌈과 함께 즐기는 별미 구이",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "훈제오리",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "상추(곁들임)",
+        "amount": "1줌",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "팬에 기름 없이 훈제오리를 굽는다.",
+      "양파를 함께 볶는다."
+    ],
+    "nutrition": [
+      "불포화지방산 함유, 고단백",
+      "1인분 약 350kcal"
+    ],
+    "health_notes": [
+      "가공육이라 나트륨이 있는 편 — 쌈채소와 함께 드시면 균형이 좋아짐"
+    ],
+    "tips": [
+      "기름이 자체로 나오므로 추가 기름은 필요 없음"
+    ],
+    "tags": {
+      "taste": [
+        "고소함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r061",
+    "name": "생선까스",
+    "summary": "바삭하고 아이 입맛에도 좋은 생선요리",
+    "difficulty": "보통",
+    "time": "25분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "동태포(냉동)",
+        "amount": "4장",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "빵가루",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "밀가루",
+        "amount": "1/2컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "생선포에 밀가루, 계란물, 빵가루 순으로 옷을 입힌다.",
+      "에어프라이어 180도에서 15분 굽는다."
+    ],
+    "nutrition": [
+      "고단백 저지방 생선요리",
+      "1인분 약 280kcal"
+    ],
+    "health_notes": [
+      "기름에 튀기지 않고 에어프라이어로 조리하면 지방 섭취를 크게 줄일 수 있음"
+    ],
+    "tips": [
+      "소스는 간장 베이스로 만들면 케첩보다 당분이 적음"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백",
+        "저지방(간 건강)"
+      ]
+    }
+  },
+  {
+    "id": "r062",
+    "name": "계란찜",
+    "summary": "부드럽고 폭신한 밥도둑 반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "계란",
+        "amount": "3개",
+        "note": ""
+      },
+      {
+        "item": "새우젓 국물",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "물",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "계란을 곱게 풀어 물, 새우젓 국물을 섞는다.",
+      "뚝배기에 담아 중약불로 저어가며 익힌다.",
+      "몽글몽글해지면 대파를 올려 마무리한다."
+    ],
+    "nutrition": [
+      "고단백 저지방, 소화가 매우 편함",
+      "1인분 약 130kcal"
+    ],
+    "health_notes": [
+      "새우젓 국물만으로 충분히 간이 맞아 소금 추가는 불필요"
+    ],
+    "tips": [
+      "전자레인지로도 간단히 조리 가능(2~3분)"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r063",
+    "name": "애호박전",
+    "summary": "부드럽고 고소한 전",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "애호박",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "밀가루",
+        "amount": "1/2컵",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "애호박을 동그랗게 썬다.",
+      "밀가루, 계란물 순으로 옷을 입힌다.",
+      "팬에 노릇하게 부친다."
+    ],
+    "nutrition": [
+      "비타민A·식이섬유 풍부",
+      "1인분 약 180kcal"
+    ],
+    "health_notes": [
+      "기름을 적게 두르고 부치면 지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "초간장에 찍어 먹으면 더 깔끔함"
+    ],
+    "tags": {
+      "taste": [
+        "고소함",
+        "담백함"
+      ],
+      "health": [
+        "저지방(간 건강)"
+      ]
+    }
+  },
+  {
+    "id": "r064",
+    "name": "감자전",
+    "summary": "바삭하고 고소한 별미 전",
+    "difficulty": "보통",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "감자",
+        "amount": "3개",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "2큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "감자를 강판에 갈아 전분물을 가라앉힌다.",
+      "윗물을 따라내고 전분과 감자를 섞는다.",
+      "팬에 얇게 펴 노릇하게 부친다."
+    ],
+    "nutrition": [
+      "탄수화물·비타민C 공급원",
+      "1인분 약 220kcal"
+    ],
+    "health_notes": [
+      "기름을 적당히만 사용하면 바삭하면서도 담백하게 즐길 수 있음"
+    ],
+    "tips": [
+      "간장초 소스와 잘 어울림"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "저염"
+      ]
+    }
+  },
+  {
+    "id": "r065",
+    "name": "파전",
+    "summary": "막걸리와 잘 어울리는 대표 전",
+    "difficulty": "보통",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "쪽파",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "부침가루",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "오징어(선택)",
+        "amount": "1/2마리",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "부침가루에 물, 계란을 섞어 반죽한다.",
+      "쪽파를 가지런히 깔고 반죽을 붓는다.",
+      "팬에 앞뒤로 노릇하게 부친다."
+    ],
+    "nutrition": [
+      "단백질(오징어·계란), 파의 알리신 성분",
+      "1인분 약 250kcal"
+    ],
+    "health_notes": [
+      "기름을 적당히만 사용하면 느끼함과 지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "초간장에 찍어 먹으면 더 깔끔함"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r066",
+    "name": "동그랑땡",
+    "summary": "도시락과 명절의 단골 반찬",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "3~4인분",
+    "ingredients": [
+      {
+        "item": "다진 돼지고기",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "두부",
+        "amount": "1/4모",
+        "note": ""
+      },
+      {
+        "item": "당근·양파(다진 것)",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "밀가루",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "다진 고기, 두부, 채소를 섞어 반죽한다.",
+      "동글납작하게 빚어 밀가루, 계란물을 입힌다.",
+      "팬에 노릇하게 부친다."
+    ],
+    "nutrition": [
+      "고단백, 채소 함께 섭취 가능",
+      "1인분 약 200kcal"
+    ],
+    "health_notes": [
+      "기름을 적게 두르고 부치면 지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "냉동 보관 후 필요할 때 구워 먹기 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r067",
+    "name": "김치전",
+    "summary": "매콤새콤 술안주로도 인기인 전",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "신김치",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "부침가루",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "물",
+        "amount": "3/4컵",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "2큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "김치를 잘게 썬다.",
+      "부침가루, 물과 함께 반죽한다.",
+      "팬에 얇게 펴 노릇하게 부친다."
+    ],
+    "nutrition": [
+      "비타민(김치) 섭취, 간편한 한 끼",
+      "1인분 약 230kcal"
+    ],
+    "health_notes": [
+      "김치 자체 염분이 있어 부침가루 반죽에는 소금을 넣지 않는 것을 권장"
+    ],
+    "tips": [
+      "막걸리 안주로도 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함",
+        "고소함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r068",
+    "name": "두부부침",
+    "summary": "담백하고 고소한 기본 반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "두부",
+        "amount": "1모",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "두부를 도톰하게 썰어 소금을 살짝 뿌린다.",
+      "팬에 노릇하게 부친다."
+    ],
+    "nutrition": [
+      "고단백 저지방 식물성 단백질",
+      "1인분 약 150kcal"
+    ],
+    "health_notes": [
+      "기름을 적게 두르고 부치면 담백하게 즐길 수 있음"
+    ],
+    "tips": [
+      "양념장을 곁들이면 감칠맛이 더해짐"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r069",
+    "name": "버섯전",
+    "summary": "향긋하고 쫄깃한 별미 전",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "새송이버섯",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "밀가루",
+        "amount": "1/2컵",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "버섯을 도톰하게 썬다.",
+      "밀가루, 계란물 순으로 옷을 입힌다.",
+      "팬에 노릇하게 부친다."
+    ],
+    "nutrition": [
+      "식이섬유·비타민D 풍부, 저칼로리",
+      "1인분 약 160kcal"
+    ],
+    "health_notes": [
+      "기름을 적게 두르고 부치면 지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "초간장과 잘 어울림"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r070",
+    "name": "콩나물불고기",
+    "summary": "아삭한 콩나물과 함께 즐기는 불고기",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "돼지고기(불고기용)",
+        "amount": "250g",
+        "note": ""
+      },
+      {
+        "item": "콩나물",
+        "amount": "1봉",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "양념에 고기를 재운다.",
+      "냄비 바닥에 콩나물을 깔고 고기를 올린다.",
+      "뚜껑을 덮고 중불에서 15분간 익힌다."
+    ],
+    "nutrition": [
+      "고단백, 콩나물의 아스파라긴산",
+      "1인분 약 320kcal"
+    ],
+    "health_notes": [
+      "고추장 양을 줄이면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "콩나물 국물까지 자작하게 즐기면 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r071",
+    "name": "미역줄기볶음",
+    "summary": "쫄깃하고 짭짤한 밑반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "미역줄기(염장)",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "들기름",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "미역줄기를 물에 담가 짠기를 뺀다.",
+      "한입 크기로 썬 뒤 기름에 볶는다.",
+      "마늘을 넣고 마무리한다."
+    ],
+    "nutrition": [
+      "식이섬유·미네랄 풍부, 저칼로리",
+      "1인분(밑반찬) 약 40kcal"
+    ],
+    "health_notes": [
+      "충분히 물에 담가 짠기를 빼면 나트륨 부담을 크게 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 5일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "저염"
+      ]
+    }
+  },
+  {
+    "id": "r072",
+    "name": "콩자반",
+    "summary": "오래 두고 먹는 영양 밑반찬",
+    "difficulty": "보통",
+    "time": "30분(불리기 별도)",
+    "servings": "4~5인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "검은콩",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "3큰술",
+        "note": ""
+      },
+      {
+        "item": "올리고당",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "콩을 불려 삶는다.",
+      "간장, 물과 함께 은근하게 졸인다.",
+      "올리고당을 넣어 윤기나게 마무리한다."
+    ],
+    "nutrition": [
+      "식물성 단백질·식이섬유 풍부",
+      "1인분(밑반찬) 약 110kcal"
+    ],
+    "health_notes": [
+      "간장 농도를 묽게 하고 여러 번 졸이면 나트륨 부담을 줄일 수 있음"
+    ],
+    "tips": [
+      "냉장 1~2주 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤",
+        "고소함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r073",
+    "name": "시래기나물",
+    "summary": "구수하고 든든한 겨울 밑반찬",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "삶은 시래기",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "된장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "들기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "시래기를 먹기 좋게 썬다.",
+      "들기름에 볶다가 된장, 마늘을 넣는다.",
+      "물을 약간 넣고 부드럽게 볶는다."
+    ],
+    "nutrition": [
+      "식이섬유 매우 풍부, 포만감",
+      "1인분(밑반찬) 약 55kcal"
+    ],
+    "health_notes": [
+      "된장 자체 염도가 있어 추가 소금은 필요 없음"
+    ],
+    "tips": [
+      "냉장 4일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r074",
+    "name": "무나물",
+    "summary": "부드럽고 슴슴한 밑반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "무",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "1/2작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "무를 채 썬다.",
+      "기름에 볶다가 물을 약간 넣고 뚜껑 덮어 익힌다.",
+      "소금, 마늘로 간한다."
+    ],
+    "nutrition": [
+      "저칼로리, 소화가 편한 채소 반찬",
+      "1인분(밑반찬) 약 35kcal"
+    ],
+    "health_notes": [
+      "소금을 최소화하고 참기름 향으로 맛을 살리면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "냉장 3일 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "저염",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r075",
+    "name": "가지볶음",
+    "summary": "부드럽고 감칠맛 나는 볶음 반찬",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "가지",
+        "amount": "2개",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "가지를 길쭉하게 썬다.",
+      "팬에 볶다가 간장, 마늘로 간한다."
+    ],
+    "nutrition": [
+      "식이섬유 풍부, 저칼로리",
+      "1인분 약 60kcal"
+    ],
+    "health_notes": [
+      "기름을 적당히만 사용하면 가지가 기름을 많이 흡수하지 않아 담백함"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)"
+      ]
+    }
+  },
+  {
+    "id": "r076",
+    "name": "애호박된장국",
+    "summary": "부드러운 애호박이 들어간 구수한 된장국",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "애호박",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "된장",
+        "amount": "1과1/2큰술",
+        "note": ""
+      },
+      {
+        "item": "두부",
+        "amount": "1/4모",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "2컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수에 된장을 푼다.",
+      "애호박, 두부를 넣고 10분간 끓인다."
+    ],
+    "nutrition": [
+      "비타민A·단백질 보충, 저칼로리",
+      "1인분 약 90kcal"
+    ],
+    "health_notes": [
+      "된장 자체 염도가 있어 추가 소금은 넣지 않는 것을 권장"
+    ],
+    "tips": [
+      "아침 국으로 부담 없음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r077",
+    "name": "오이소박이",
+    "summary": "아삭하고 매콤한 여름 별미 김치",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "3~4인분(밑반찬)",
+    "ingredients": [
+      {
+        "item": "오이",
+        "amount": "5개",
+        "note": ""
+      },
+      {
+        "item": "부추",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "3큰술",
+        "note": ""
+      },
+      {
+        "item": "멸치액젓",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "오이를 십자로 칼집 내어 소금에 절인다.",
+      "부추, 양념을 버무려 소를 만든다.",
+      "오이 칼집 사이에 소를 채운다."
+    ],
+    "nutrition": [
+      "수분·비타민 풍부, 저칼로리",
+      "1인분(밑반찬) 약 30kcal"
+    ],
+    "health_notes": [
+      "멸치액젓 양을 줄이면 나트륨 부담을 낮출 수 있음"
+    ],
+    "tips": [
+      "냉장 3~4일 내 새콤하게 익었을 때 가장 맛있음"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함",
+        "새콤달콤"
+      ],
+      "health": [
+        "저당"
+      ]
+    }
+  },
+  {
+    "id": "r078",
+    "name": "열무김치비빔밥",
+    "summary": "새콤한 열무김치로 만드는 여름 별미",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "1인분",
+    "ingredients": [
+      {
+        "item": "밥",
+        "amount": "1공기",
+        "note": ""
+      },
+      {
+        "item": "열무김치",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "계란후라이(선택)",
+        "amount": "1개",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "밥에 열무김치를 송송 썰어 올린다.",
+      "참기름, 고추장을 넣고 비빈다.",
+      "계란후라이를 올리면 더 든든함."
+    ],
+    "nutrition": [
+      "식이섬유·비타민 풍부, 발효식품 섭취",
+      "1인분 약 450kcal"
+    ],
+    "health_notes": [
+      "고추장 양을 줄이면 나트륨·당 부담이 적음"
+    ],
+    "tips": [
+      "여름철 입맛 없을 때 간편하게 한 끼"
+    ],
+    "tags": {
+      "taste": [
+        "새콤달콤"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r079",
+    "name": "김치볶음밥",
+    "summary": "냉장고 속 김치로 간편하게 만드는 한 끼",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "1~2인분",
+    "ingredients": [
+      {
+        "item": "밥",
+        "amount": "1공기",
+        "note": ""
+      },
+      {
+        "item": "김치",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "김치국물",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "계란후라이(선택)",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "식용유",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "김치를 잘게 썰어 기름에 볶는다.",
+      "밥과 김치국물을 넣고 함께 볶는다.",
+      "계란후라이를 올려 마무리한다."
+    ],
+    "nutrition": [
+      "탄수화물·비타민(김치) 섭취",
+      "1인분 약 480kcal"
+    ],
+    "health_notes": [
+      "기름 양을 줄이고 채소(당근, 양파)를 더하면 균형이 좋아짐"
+    ],
+    "tips": [
+      "남은 밥·김치 처리에 좋은 간편식"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함",
+        "든든함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r080",
+    "name": "참치마요덮밥",
+    "summary": "간편하고 든든한 한 그릇 요리",
+    "difficulty": "쉬움",
+    "time": "10분",
+    "servings": "1인분",
+    "ingredients": [
+      {
+        "item": "밥",
+        "amount": "1공기",
+        "note": ""
+      },
+      {
+        "item": "참치캔",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "마요네즈",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "간장",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "대파",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "참치캔의 기름을 뺀다.",
+      "마요네즈, 간장과 섞는다.",
+      "밥 위에 올리고 대파를 뿌린다."
+    ],
+    "nutrition": [
+      "고단백, 간편한 한 끼",
+      "1인분 약 500kcal"
+    ],
+    "health_notes": [
+      "마요네즈 양을 줄이면 지방 섭취를 줄일 수 있음",
+      "참치 기름을 완전히 빼는 것이 중요"
+    ],
+    "tips": [
+      "구운 김을 곁들이면 더 맛있음"
+    ],
+    "tags": {
+      "taste": [
+        "고소함",
+        "든든함"
+      ],
+      "health": [
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r081",
+    "name": "낙지볶음",
+    "summary": "매콤하고 쫄깃한 스태미나 요리",
+    "difficulty": "보통",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "낙지",
+        "amount": "2마리",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "낙지를 손질해 먹기 좋게 썬다.",
+      "야채를 볶다가 낙지, 양념을 넣고 센 불에 빠르게 볶는다."
+    ],
+    "nutrition": [
+      "타우린 풍부, 고단백 저지방",
+      "1인분 약 220kcal"
+    ],
+    "health_notes": [
+      "센 불에서 짧게 볶아야 질겨지지 않고 소화도 편함"
+    ],
+    "tips": [
+      "볶음우동으로 응용 가능"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r082",
+    "name": "주꾸미볶음",
+    "summary": "봄철 별미, 쫄깃한 주꾸미 요리",
+    "difficulty": "보통",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "주꾸미",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "주꾸미를 손질한다.",
+      "야채를 볶다가 주꾸미, 양념을 넣고 센 불에 볶는다."
+    ],
+    "nutrition": [
+      "타우린·철분 풍부, 고단백 저지방",
+      "1인분 약 210kcal"
+    ],
+    "health_notes": [
+      "센 불에서 짧게 볶아야 질겨지지 않음"
+    ],
+    "tips": [
+      "삼겹살과 함께 볶으면 별미지만 지방 섭취가 늘어남에 유의"
+    ],
+    "tags": {
+      "taste": [
+        "매콤함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r083",
+    "name": "오징어무침",
+    "summary": "새콤달콤 쫄깃한 밑반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "오징어",
+        "amount": "1마리",
+        "note": ""
+      },
+      {
+        "item": "오이",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "식초",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "설탕",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "오징어를 데쳐 먹기 좋게 썬다.",
+      "오이와 함께 양념으로 무친다."
+    ],
+    "nutrition": [
+      "저지방 고단백, 타우린 풍부",
+      "1인분 약 150kcal"
+    ],
+    "health_notes": [
+      "식초의 신맛을 활용하면 설탕·고추장을 줄여도 맛있음"
+    ],
+    "tips": [
+      "냉장 2일 이내 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "새콤달콤"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r084",
+    "name": "황태해장국",
+    "summary": "술 마신 다음날 든든한 해장국",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "황태채",
+        "amount": "1줌",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/6개",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "황태채를 참기름에 볶는다.",
+      "무를 넣고 물을 부어 끓인다.",
+      "계란을 풀어 넣고 국간장으로 간한다."
+    ],
+    "nutrition": [
+      "고단백 저지방, 아미노산이 숙취 해소에 도움",
+      "1인분 약 140kcal"
+    ],
+    "health_notes": [
+      "국간장을 적게 넣으면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "해장에 좋아 술자리 다음날 추천"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "시원한 국물"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r085",
+    "name": "콩나물해장국",
+    "summary": "얼큰하고 시원한 해장 국물",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "콩나물",
+        "amount": "1봉",
+        "note": ""
+      },
+      {
+        "item": "새우젓",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "콩나물을 물에 넣고 뚜껑 덮어 끓인다.",
+      "새우젓, 고춧가루, 마늘로 간한다.",
+      "계란을 넣어 반숙으로 익힌다."
+    ],
+    "nutrition": [
+      "비타민C, 아스파라긴산 풍부",
+      "1인분 약 100kcal"
+    ],
+    "health_notes": [
+      "새우젓 양을 줄이면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "밥을 말아 먹으면 든든한 해장식"
+    ],
+    "tags": {
+      "taste": [
+        "시원한 국물",
+        "얼큰함"
+      ],
+      "health": [
+        "저당",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r086",
+    "name": "굴국밥",
+    "summary": "시원하고 담백한 겨울 별미",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "굴",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "무",
+        "amount": "1/6개",
+        "note": ""
+      },
+      {
+        "item": "밥",
+        "amount": "2공기",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "무를 넣고 육수를 끓인다.",
+      "굴을 넣고 살짝만 끓인다(오래 끓이면 질겨짐).",
+      "국간장으로 간하고 밥을 말아낸다."
+    ],
+    "nutrition": [
+      "아연·철분 풍부, 고단백 저지방",
+      "1인분 약 350kcal"
+    ],
+    "health_notes": [
+      "굴은 짧게 데치듯 끓여야 부드럽고 영양 손실도 적음"
+    ],
+    "tips": [
+      "겨울 별미로 좋음, 당일 섭취 권장"
+    ],
+    "tags": {
+      "taste": [
+        "시원한 국물",
+        "담백함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r087",
+    "name": "순두부백반",
+    "summary": "부드러운 순두부와 밥 한 상",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "1인분",
+    "ingredients": [
+      {
+        "item": "순두부",
+        "amount": "1봉",
+        "note": ""
+      },
+      {
+        "item": "계란",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "애호박",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "고춧가루",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "밥",
+        "amount": "1공기",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "육수에 고춧가루를 풀고 애호박을 넣어 끓인다.",
+      "순두부를 넣고 3분 끓인다.",
+      "계란을 풀어 넣고 마무리, 밥과 함께 낸다."
+    ],
+    "nutrition": [
+      "고단백 저지방 두부요리",
+      "1인분(밥 포함) 약 450kcal"
+    ],
+    "health_notes": [
+      "맵기를 줄이면 소화가 더 편함"
+    ],
+    "tips": [
+      "1인분 조리에 편리한 자취/혼밥 메뉴"
+    ],
+    "tags": {
+      "taste": [
+        "얼큰함"
+      ],
+      "health": [
+        "소화가 편한",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r088",
+    "name": "전복죽",
+    "summary": "보양식으로 좋은 부드러운 죽",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "전복",
+        "amount": "2마리",
+        "note": ""
+      },
+      {
+        "item": "쌀",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "당근(선택)",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "전복을 손질해 얇게 썬다.",
+      "참기름에 쌀, 전복을 볶는다.",
+      "물을 부어 눌어붙지 않게 저어가며 끓인다."
+    ],
+    "nutrition": [
+      "고단백 저지방, 소화가 매우 편함",
+      "1인분 약 380kcal"
+    ],
+    "health_notes": [
+      "소금 간은 최소화하고 전복 자체의 감칠맛을 살리는 것을 권장"
+    ],
+    "tips": [
+      "회복식·보양식으로 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "고소함"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r089",
+    "name": "야채죽",
+    "summary": "부담 없이 속을 편하게 하는 죽",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "쌀",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "당근",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "애호박",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "양파",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "채소를 잘게 다진다.",
+      "참기름에 쌀, 채소를 볶는다.",
+      "물을 부어 저어가며 끓인다."
+    ],
+    "nutrition": [
+      "식이섬유 풍부, 소화가 매우 편함",
+      "1인분 약 250kcal"
+    ],
+    "health_notes": [
+      "소금 없이도 채소 단맛으로 충분히 맛있어 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "속이 안 좋을 때 부담 없는 한 끼"
+    ],
+    "tags": {
+      "taste": [
+        "담백함"
+      ],
+      "health": [
+        "소화가 편한",
+        "저염"
+      ]
+    }
+  },
+  {
+    "id": "r090",
+    "name": "단호박죽",
+    "summary": "달콤하고 부드러운 영양 죽",
+    "difficulty": "쉬움",
+    "time": "25분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "단호박",
+        "amount": "1/2개",
+        "note": ""
+      },
+      {
+        "item": "찹쌀가루",
+        "amount": "3큰술",
+        "note": ""
+      },
+      {
+        "item": "물",
+        "amount": "2컵",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "단호박을 쪄서 으깬다.",
+      "물과 함께 끓이다가 찹쌀가루를 풀어 넣는다.",
+      "눌어붙지 않게 저어가며 끓인다."
+    ],
+    "nutrition": [
+      "베타카로틴·식이섬유 풍부",
+      "1인분 약 220kcal"
+    ],
+    "health_notes": [
+      "단호박 자체 단맛이 있어 설탕 추가 없이도 맛있어 당 부담이 적음"
+    ],
+    "tips": [
+      "간식이나 아침 대용으로 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "살짝 달콤"
+      ],
+      "health": [
+        "소화가 편한",
+        "저당"
+      ]
+    }
+  },
+  {
+    "id": "r091",
+    "name": "닭죽",
+    "summary": "부드럽고 든든한 보양 죽",
+    "difficulty": "보통",
+    "time": "40분",
+    "servings": "2~3인분",
+    "ingredients": [
+      {
+        "item": "닭다리살",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "쌀",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "마늘",
+        "amount": "3쪽",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "닭을 삶아 육수를 내고 살을 찢는다.",
+      "참기름에 쌀을 볶다가 육수를 부어 끓인다.",
+      "닭살을 넣고 마무리한다."
+    ],
+    "nutrition": [
+      "고단백, 소화가 편한 보양식",
+      "1인분 약 350kcal"
+    ],
+    "health_notes": [
+      "닭껍질을 제거하면 지방 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "회복기 식사로 좋음, 냉동 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "든든함"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r092",
+    "name": "소고기죽",
+    "summary": "기운 없을 때 든든한 보양 죽",
+    "difficulty": "보통",
+    "time": "30분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "소고기(다짐육)",
+        "amount": "150g",
+        "note": ""
+      },
+      {
+        "item": "쌀",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "당근(선택)",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "참기름에 소고기, 쌀을 볶는다.",
+      "물을 부어 저어가며 끓인다.",
+      "국간장으로 간한다."
+    ],
+    "nutrition": [
+      "고단백, 철분 풍부",
+      "1인분 약 320kcal"
+    ],
+    "health_notes": [
+      "국간장을 적게 넣으면 나트륨 부담이 적음, 소고기 기름기 적은 부위 권장"
+    ],
+    "tips": [
+      "회복기 식사나 아침 대용으로 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "든든함"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r093",
+    "name": "두부김치",
+    "summary": "술안주로도 좋은 든든한 반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "두부",
+        "amount": "1모",
+        "note": ""
+      },
+      {
+        "item": "신김치",
+        "amount": "1컵",
+        "note": ""
+      },
+      {
+        "item": "돼지고기(선택)",
+        "amount": "100g",
+        "note": ""
+      },
+      {
+        "item": "참기름",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "두부를 데치거나 쪄서 썰어둔다.",
+      "김치(와 돼지고기)를 볶는다.",
+      "두부와 함께 접시에 낸다."
+    ],
+    "nutrition": [
+      "단백질(두부)과 발효식품 섭취",
+      "1인분 약 220kcal"
+    ],
+    "health_notes": [
+      "두부를 부치지 않고 데치면 기름 섭취를 줄일 수 있음"
+    ],
+    "tips": [
+      "막걸리 안주로도 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "얼큰함",
+        "고소함"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r094",
+    "name": "새우볶음",
+    "summary": "탱글탱글 짭짤한 술안주 겸 반찬",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "새우(중하)",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "마늘",
+        "amount": "5쪽",
+        "note": ""
+      },
+      {
+        "item": "버터 또는 식용유",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "소금·후추",
+        "amount": "약간",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "마늘을 기름에 볶아 향을 낸다.",
+      "새우를 넣고 센 불에 볶는다.",
+      "소금, 후추로 간한다."
+    ],
+    "nutrition": [
+      "고단백 저지방, 아연 풍부",
+      "1인분 약 180kcal"
+    ],
+    "health_notes": [
+      "버터보다 올리브유를 사용하면 포화지방을 줄일 수 있음"
+    ],
+    "tips": [
+      "레몬즙을 곁들이면 상큼함이 더해짐"
+    ],
+    "tags": {
+      "taste": [
+        "고소함"
+      ],
+      "health": [
+        "저지방(간 건강)",
+        "고단백"
+      ]
+    }
+  },
+  {
+    "id": "r095",
+    "name": "잔치국수",
+    "summary": "손님상에도 자주 오르는 따뜻한 국수",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "소면",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "애호박",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "계란지단",
+        "amount": "1개분",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "3컵",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수를 끓여 국간장으로 간한다.",
+      "소면을 삶아 찬물에 헹군다.",
+      "그릇에 면을 담고 육수를 부은 뒤 애호박, 계란지단을 올린다."
+    ],
+    "nutrition": [
+      "탄수화물 위주, 소화가 편한 한 끼",
+      "1인분 약 400kcal"
+    ],
+    "health_notes": [
+      "국간장을 적게 넣고 멸치 감칠맛을 살리면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "애호박은 살짝 볶아 올리면 더 맛있음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "시원한 국물"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r096",
+    "name": "비빔국수",
+    "summary": "새콤매콤 여름철 별미 국수",
+    "difficulty": "쉬움",
+    "time": "15분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "소면",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "고추장",
+        "amount": "2큰술",
+        "note": ""
+      },
+      {
+        "item": "식초",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "설탕",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "오이(고명)",
+        "amount": "1/4개",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "소면을 삶아 찬물에 헹궈 물기를 뺀다.",
+      "양념을 섞어 면과 버무린다.",
+      "오이를 채 썰어 올린다."
+    ],
+    "nutrition": [
+      "탄수화물 위주, 새콤한 맛으로 입맛 살림",
+      "1인분 약 420kcal"
+    ],
+    "health_notes": [
+      "고추장·설탕을 줄이고 식초 비중을 늘리면 당·나트륨 부담이 적음"
+    ],
+    "tips": [
+      "삶은 계란을 곁들이면 단백질 보충 가능"
+    ],
+    "tags": {
+      "taste": [
+        "새콤달콤",
+        "매콤함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r097",
+    "name": "콩국수",
+    "summary": "고소하고 시원한 여름 보양 국수",
+    "difficulty": "보통",
+    "time": "20분(콩 삶기 별도)",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "삶은 콩",
+        "amount": "2컵",
+        "note": ""
+      },
+      {
+        "item": "소면",
+        "amount": "200g",
+        "note": ""
+      },
+      {
+        "item": "소금",
+        "amount": "약간",
+        "note": ""
+      },
+      {
+        "item": "오이(고명)",
+        "amount": "1/4개",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "삶은 콩을 물과 함께 곱게 갈아 콩물을 만든다.",
+      "소면을 삶아 찬물에 헹군다.",
+      "그릇에 면을 담고 콩물을 부은 뒤 오이를 올린다."
+    ],
+    "nutrition": [
+      "식물성 단백질 풍부, 여름 보양식",
+      "1인분 약 450kcal"
+    ],
+    "health_notes": [
+      "소금 대신 콩 자체의 고소한 맛으로 즐기면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "콩물은 미리 만들어 냉장 보관 가능"
+    ],
+    "tags": {
+      "taste": [
+        "고소함",
+        "시원한 국물"
+      ],
+      "health": [
+        "고단백",
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r098",
+    "name": "수제비",
+    "summary": "쫄깃한 밀가루 반죽이 들어간 구수한 국물요리",
+    "difficulty": "보통",
+    "time": "30분(반죽 숙성 별도)",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "밀가루",
+        "amount": "1과1/2컵",
+        "note": ""
+      },
+      {
+        "item": "애호박",
+        "amount": "1/4개",
+        "note": ""
+      },
+      {
+        "item": "감자",
+        "amount": "1개",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "3컵",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "밀가루를 물로 반죽해 30분 숙성시킨다.",
+      "멸치육수에 감자를 넣고 끓인다.",
+      "반죽을 얇게 떼어 넣고 애호박과 함께 끓인다."
+    ],
+    "nutrition": [
+      "탄수화물 위주, 든든한 한 끼",
+      "1인분 약 380kcal"
+    ],
+    "health_notes": [
+      "국간장을 적게 넣으면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "반죽을 미리 만들어두면 조리 시간이 짧아짐"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "든든함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r099",
+    "name": "떡국",
+    "summary": "설날에 빠지지 않는 대표 명절 음식",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "떡국떡",
+        "amount": "300g",
+        "note": ""
+      },
+      {
+        "item": "계란지단",
+        "amount": "1개분",
+        "note": ""
+      },
+      {
+        "item": "소고기(국거리, 선택)",
+        "amount": "80g",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "멸치 또는 사골육수",
+        "amount": "3컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "육수를 끓인다.",
+      "떡을 넣고 떠오를 때까지 끓인다.",
+      "국간장으로 간하고 계란지단을 올린다."
+    ],
+    "nutrition": [
+      "탄수화물 위주, 소화가 편한 한 끼",
+      "1인분 약 400kcal"
+    ],
+    "health_notes": [
+      "국간장을 적게 넣으면 나트륨 부담이 적음"
+    ],
+    "tips": [
+      "명절 아니어도 간단한 아침 식사로 좋음"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "든든함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  },
+  {
+    "id": "r100",
+    "name": "만둣국",
+    "summary": "속이 꽉 찬 만두로 든든하게 즐기는 국",
+    "difficulty": "쉬움",
+    "time": "20분",
+    "servings": "2인분",
+    "ingredients": [
+      {
+        "item": "냉동만두",
+        "amount": "10개",
+        "note": ""
+      },
+      {
+        "item": "계란지단",
+        "amount": "1개분",
+        "note": ""
+      },
+      {
+        "item": "국간장",
+        "amount": "1큰술",
+        "note": ""
+      },
+      {
+        "item": "다진마늘",
+        "amount": "1작은술",
+        "note": ""
+      },
+      {
+        "item": "멸치육수",
+        "amount": "3컵",
+        "note": ""
+      }
+    ],
+    "steps": [
+      "멸치육수를 끓인다.",
+      "만두를 넣고 떠오를 때까지 끓인다.",
+      "국간장으로 간하고 계란지단을 올린다."
+    ],
+    "nutrition": [
+      "단백질(만두 속), 든든한 한 끼",
+      "1인분 약 420kcal"
+    ],
+    "health_notes": [
+      "시판 만두는 나트륨이 있는 편 — 국간장은 적게 넣는 것을 권장"
+    ],
+    "tips": [
+      "떡국떡을 함께 넣으면 떡만둣국으로 응용 가능"
+    ],
+    "tags": {
+      "taste": [
+        "담백함",
+        "든든함"
+      ],
+      "health": [
+        "소화가 편한"
+      ]
+    }
+  }
+];
+
+let state = {
+  category:"taste",
+  activeTags:[],
+  recipes: loadLocal()
+};
+
+function loadLocal(){
+  const raw = localStorage.getItem("recipebook_data");
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return SEED_RECIPES.slice();
+}
+function saveLocal(){
+  localStorage.setItem("recipebook_data", JSON.stringify(state.recipes));
+}
+
+function setCategory(cat){
+  state.category = cat;
+  state.activeTags = [];
+  document.getElementById("catTasteBtn").classList.toggle("active", cat==="taste");
+  document.getElementById("catHealthBtn").classList.toggle("active", cat==="health");
+  renderTags();
+  renderGrid();
+}
+
+function renderTags(){
+  const tags = state.category === "taste" ? TASTE_TAGS : HEALTH_TAGS;
+  const row = document.getElementById("tagRow");
+  row.innerHTML = tags.map(t => {
+    const active = state.activeTags.includes(t);
+    return `<button class="tag-chip ${active?'active':''}" onclick="toggleTag('${t.replace(/'/g,"\\'")}')">${t}</button>`;
+  }).join("");
+}
+function toggleTag(t){
+  const i = state.activeTags.indexOf(t);
+  if(i>=0) state.activeTags.splice(i,1); else state.activeTags.push(t);
+  renderTags();
+  renderGrid();
+}
+
+function renderGrid(){
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const grid = document.getElementById("grid");
+  const catKey = state.category;
+  let list = state.recipes.filter(r=>{
+    if(q && !r.name.toLowerCase().includes(q)) return false;
+    if(state.activeTags.length){
+      const rtags = (r.tags && r.tags[catKey]) || [];
+      if(!state.activeTags.every(t=>rtags.includes(t))) return false;
+    }
+    return true;
+  });
+  document.getElementById("emptyState").style.display = list.length? "none":"block";
+  grid.innerHTML = list.map(r=>{
+    const rtags = (r.tags && r.tags[catKey]) || [];
+    return `<div class="card" onclick="openDetail('${r.id}')">
+      <div class="card-head">
+        <div class="name">${esc(r.name)}</div>
+        <div class="summary">${esc(r.summary||"")}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="pill">${esc(r.difficulty||"")}</span>
+          <span class="pill">${esc(r.time||"")}</span>
+        </div>
+        <div class="card-tags">${rtags.map(t=>`<span class="mini-tag">${esc(t)}</span>`).join("")}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function openDetail(id){
+  const r = state.recipes.find(x=>x.id===id);
+  if(!r) return;
+  const ing = (r.ingredients||[]).map(i=>`
+    <div class="ing-row"><div><span class="iname">${esc(i.item)}</span>${i.note?`<span class="inote">${esc(i.note)}</span>`:""}</div><span class="iamt">${esc(i.amount||"")}</span></div>`).join("");
+  const steps = (r.steps||[]).map((s,idx)=>`<div class="step-row"><div class="snum">${idx+1}</div><div>${esc(s)}</div></div>`).join("");
+  const nutrition = (r.nutrition||[]).map(s=>`<li>${esc(s)}</li>`).join("");
+  const health = (r.health_notes||[]).map(s=>`<li>${esc(s)}</li>`).join("");
+  const tips = (r.tips||[]).map(s=>`<li>${esc(s)}</li>`).join("");
+  const tasteTags = (r.tags&&r.tags.taste||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join("");
+  const healthTags = (r.tags&&r.tags.health||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join("");
+
+  document.getElementById("detailContent").innerHTML = `
+    <div class="rband">
+      <div class="rkicker">간 편 · 건 강 레 시 피 카 드</div>
+      <div class="rname">${esc(r.name)}</div>
+      <div class="rsummary">${esc(r.summary||"")}</div>
+      <div class="rmeta">
+        <span>난이도 ${esc(r.difficulty||"")}</span>
+        <span>${esc(r.time||"")}</span>
+        <span>${esc(r.servings||"")}</span>
+      </div>
+    </div>
+    <div class="rcontent">
+      <div class="rsection"><div class="rsection-title"><span class="num">1</span>재료</div><div class="rrule"></div>${ing}</div>
+      <div class="rsection"><div class="rsection-title"><span class="num">2</span>조리 순서</div><div class="rrule"></div>${steps}</div>
+      <div class="rsection"><div class="rsection-title"><span class="num">3</span>영양 포인트</div><div class="rrule"></div><ul class="plainlist">${nutrition}</ul></div>
+      <div class="rsection"><div class="rsection-title"><span class="num">4</span>건강 고려사항</div><div class="rrule"></div><div class="healthbox"><ul class="plainlist">${health}</ul></div></div>
+      <div class="rsection"><div class="rsection-title"><span class="num">5</span>보관·활용 팁</div><div class="rrule"></div><ul class="plainlist">${tips}</ul></div>
+      <div class="rsection">
+        <div class="rsection-title"><span class="num">#</span>태그</div><div class="rrule"></div>
+        <div style="font-size:11px;color:#999;margin-bottom:3px;">맛</div>
+        <div class="rtaglist">${tasteTags||'<span class="rtag">-</span>'}</div>
+        <div style="font-size:11px;color:#999;margin:8px 0 3px 0;">건강</div>
+        <div class="rtaglist">${healthTags||'<span class="rtag">-</span>'}</div>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn btn-pdf" onclick="window.print()">인쇄 / PDF 저장</button>
+      <button class="btn btn-del" onclick="deleteRecipe('${r.id}')">삭제</button>
+    </div>
+    <div class="rfooter">
+      <div class="rule2"></div>
+      <div class="brand2">유 앤 김 패 밀 리</div>
+      <div class="tagline">PINETREE FAMILY OFFICE · 간편 건강 레시피 컬렉션</div>
+    </div>
+  `;
+  document.getElementById("detailOverlay").classList.add("show");
+}
+
+function deleteRecipe(id){
+  if(!confirm("이 레시피를 삭제할까요?")) return;
+  state.recipes = state.recipes.filter(r=>r.id!==id);
+  saveLocal();
+  closeModal("detailOverlay");
+  renderGrid();
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+
+function openAddForm(){
+  ["f_name","f_summary","f_difficulty","f_time","f_servings","f_ingredients","f_steps","f_nutrition","f_health_notes","f_tips","f_tag_taste","f_tag_health","jsonPaste"]
+  .forEach(id=>document.getElementById(id).value="");
+  document.getElementById("formOverlay").classList.add("show");
+}
+
+function parseJsonPaste(){
+  const raw = document.getElementById("jsonPaste").value.trim();
+  if(!raw) return;
+  try{
+    const d = JSON.parse(raw);
+    document.getElementById("f_name").value = d.name||"";
+    document.getElementById("f_summary").value = d.summary||"";
+    document.getElementById("f_difficulty").value = d.difficulty||"";
+    document.getElementById("f_time").value = d.time||"";
+    document.getElementById("f_servings").value = d.servings||"";
+    document.getElementById("f_ingredients").value = (d.ingredients||[]).map(i=>`${i.item} | ${i.amount||""} | ${i.note||""}`).join("\n");
+    document.getElementById("f_steps").value = (d.steps||[]).join("\n");
+    document.getElementById("f_nutrition").value = (d.nutrition||[]).join("\n");
+    document.getElementById("f_health_notes").value = (d.health_notes||[]).join("\n");
+    document.getElementById("f_tips").value = (d.tips||[]).join("\n");
+    if(d.tags){
+      document.getElementById("f_tag_taste").value = (d.tags.taste||[]).join(", ");
+      document.getElementById("f_tag_health").value = (d.tags.health||[]).join(", ");
+    }
+  }catch(e){ alert("JSON 형식을 확인해주세요."); }
+}
+
+function saveRecipeFromForm(){
+  const name = document.getElementById("f_name").value.trim();
+  if(!name){ alert("요리 이름을 입력해주세요."); return; }
+  const ingredients = document.getElementById("f_ingredients").value.split("\n").filter(x=>x.trim()).map(line=>{
+    const [item,amount,note] = line.split("|").map(s=>s?s.trim():"");
+    return {item:item||"", amount:amount||"", note:note||""};
+  });
+  const splitLines = (id)=>document.getElementById(id).value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const rec = {
+    id: "r_"+Date.now(),
+    name,
+    summary: document.getElementById("f_summary").value.trim(),
+    difficulty: document.getElementById("f_difficulty").value.trim(),
+    time: document.getElementById("f_time").value.trim(),
+    servings: document.getElementById("f_servings").value.trim(),
+    ingredients,
+    steps: splitLines("f_steps"),
+    nutrition: splitLines("f_nutrition"),
+    health_notes: splitLines("f_health_notes"),
+    tips: splitLines("f_tips"),
+    tags: {
+      taste: document.getElementById("f_tag_taste").value.split(",").map(s=>s.trim()).filter(Boolean),
+      health: document.getElementById("f_tag_health").value.split(",").map(s=>s.trim()).filter(Boolean)
+    }
+  };
+  state.recipes.push(rec);
+  saveLocal();
+  closeModal("formOverlay");
+  renderGrid();
+}
+
+/* ---- PIN sync ---- */
+function openPinModal(){
+  document.getElementById("pinInput").value = localStorage.getItem("recipebook_pin") || "";
+  document.getElementById("syncStatus").textContent = "";
+  document.getElementById("pinOverlay").classList.add("show");
+}
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function pullFromCloud(){
+  const pin = document.getElementById("pinInput").value.trim();
+  if(!pin){ alert("PIN을 입력해주세요."); return; }
+  const status = document.getElementById("syncStatus");
+  status.textContent = "불러오는 중...";
+  try{
+    const key = await sha256Hex("recipe:"+pin);
+    const res = await fetch(`${API_BASE}/sync?key=${key}`);
+    if(!res.ok) throw new Error("no data");
+    const data = await res.json();
+    if(data && data.recipes){
+      state.recipes = data.recipes;
+      saveLocal();
+      localStorage.setItem("recipebook_pin", pin);
+      renderGrid();
+      status.textContent = `불러오기 완료 (${data.recipes.length}개 레시피)`;
+    }else{
+      status.textContent = "저장된 데이터가 없습니다.";
+    }
+  }catch(e){
+    status.textContent = "동기화 서버에 연결할 수 없거나 저장된 데이터가 없습니다.";
+  }
+}
+async function pushToCloud(){
+  const pin = document.getElementById("pinInput").value.trim();
+  if(!pin){ alert("PIN을 입력해주세요."); return; }
+  const status = document.getElementById("syncStatus");
+  status.textContent = "저장하는 중...";
+  try{
+    const key = await sha256Hex("recipe:"+pin);
+    const res = await fetch(`${API_BASE}/sync?key=${key}`, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({recipes: state.recipes, updatedAt: new Date().toISOString()})
+    });
+    if(!res.ok) throw new Error("save failed");
+    localStorage.setItem("recipebook_pin", pin);
+    status.textContent = "저장 완료 — 다른 기기에서 같은 PIN으로 불러올 수 있어요.";
+  }catch(e){
+    status.textContent = "저장 실패. 잠시 후 다시 시도해주세요.";
+  }
+}
+
+/* init */
+renderTags();
+renderGrid();
+</script>
+</body>
+</html>
