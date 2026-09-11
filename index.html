@@ -158,6 +158,33 @@ body{
 .rsummary{ font-family:'Noto Serif KR',serif; color:#D8CDBB; font-size:11px; }
 .rmeta{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
 .rmeta span{ border:1px solid var(--gold); color:var(--gold-soft); font-size:10.5px; padding:4px 12px; border-radius:16px; font-weight:700;}
+
+/* 매운맛 조절 / 저염 모드 컨트롤 */
+.adjust-bar{
+  background:#F6F1E4; border-bottom:1px solid var(--line); padding:12px 28px;
+  display:flex; flex-wrap:wrap; gap:18px; align-items:center;
+}
+.adjust-group{ display:flex; align-items:center; gap:10px; }
+.adjust-label{ font-size:11.5px; font-weight:700; color:var(--navy); white-space:nowrap; }
+.seg{ display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; }
+.seg-btn{
+  border:none; background:#fff; color:#888; font-size:11.5px; font-weight:700; padding:7px 12px; cursor:pointer;
+  border-right:1px solid var(--line); transition:background .15s,color .15s;
+}
+.seg-btn:last-child{ border-right:none; }
+.seg-btn.active{ background:var(--navy); color:var(--gold-soft); }
+.toggle-switch{
+  width:42px; height:24px; border-radius:14px; background:#ddd; border:none; position:relative; cursor:pointer;
+  transition:background .18s; padding:0;
+}
+.toggle-switch .knob{
+  position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:left .18s;
+}
+.toggle-switch.on{ background:var(--navy); }
+.toggle-switch.on .knob{ left:20px; }
+.adjust-note{ font-size:10px; color:#999; margin-top:6px; }
+.iamt.adjusted{ color:var(--gold); }
 .rcontent{ padding:10px 28px 26px 28px; }
 .rsection{ margin-top:18px; }
 .rsection-title{ font-family:'Noto Serif KR',serif; font-weight:700; color:var(--navy); font-size:14px; display:flex; align-items:center; gap:8px;}
@@ -6062,6 +6089,54 @@ function renderGrid(){
 
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+/* ---- 재료 양 자동 조절 (매운맛 강도 / 저염 모드) ---- */
+const SPICY_KEYWORDS = ["고춧가루","고추장","청양고추","베트남고추","페페론치노"];
+const SALTY_KEYWORDS = ["간장","소금","액젓","새우젓","국간장","진간장"];
+
+function classifyIngredient(name){
+  const n = name||"";
+  if(SPICY_KEYWORDS.some(k=>n.includes(k))) return "spicy";
+  if(SALTY_KEYWORDS.some(k=>n.includes(k))) return "salty";
+  return null;
+}
+function parseQty(s){
+  s = (s||"").trim();
+  let m = s.match(/^(\d+)\s*과\s*(\d+)\/(\d+)\s*(.*)$/);
+  if(m) return { value: parseInt(m[1],10) + parseInt(m[2],10)/parseInt(m[3],10), unit: m[4].trim() };
+  m = s.match(/^(\d+)\/(\d+)\s*(.*)$/);
+  if(m) return { value: parseInt(m[1],10)/parseInt(m[2],10), unit: m[3].trim() };
+  m = s.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+  if(m) return { value: parseFloat(m[1]), unit: m[2].trim() };
+  return null;
+}
+function toFractionStr(v){
+  const whole = Math.floor(v + 1e-6);
+  let frac = v - whole;
+  const fracTable = [[0,""],[0.25,"1/4"],[0.33,"1/3"],[0.5,"1/2"],[0.67,"2/3"],[0.75,"3/4"],[1,""]];
+  let best = fracTable[0], bestDiff = 999;
+  for(const [fv,fs] of fracTable){ const d=Math.abs(fv-frac); if(d<bestDiff){bestDiff=d; best=[fv,fs];} }
+  let w = whole, fs = best[1];
+  if(best[0]===1){ w += 1; fs=""; }
+  if(w===0 && fs==="") return "0";
+  if(w===0) return fs;
+  if(fs==="") return String(w);
+  return `${w}과${fs}`;
+}
+function roundForUnit(value, unit){
+  const spoon=["큰술","작은술","컵"], count=["개","쪽","마리","장","줌","토막","팩","봉","모","단"], weight=["g","kg","ml","l"];
+  if(spoon.some(u=>unit.includes(u))) return Math.max(0.25, Math.round(value*4)/4);
+  if(count.some(u=>unit.includes(u))) return Math.max(0.5, Math.round(value*2)/2);
+  if(weight.some(u=>unit.includes(u))) return Math.max(5, Math.round(value/5)*5);
+  return Math.round(value*10)/10;
+}
+function scaleAmount(amountStr, factor){
+  const p = parseQty(amountStr);
+  if(!p || factor===1) return { text: amountStr, changed:false };
+  const scaled = roundForUnit(p.value*factor, p.unit);
+  return { text: toFractionStr(scaled) + (p.unit||""), changed:true };
+}
+function spiceFactor(level){ return level==="mild" ? 0.6 : level==="hot" ? 1.4 : 1; }
+
 function openDetail(id){
   const r = state.recipes.find(x=>x.id===id);
   if(!r) return;
@@ -6072,6 +6147,8 @@ function openDetail(id){
   if(idx === -1){ list = state.recipes; idx = list.findIndex(x=>x.id===id); }
   state.currentIndex = idx;
   state.navList = list;
+  state.currentRecipe = r;
+  state.detailOptions = { spice:"normal", lowSodium:false };
 
   const total = list.length;
   const counterEl = document.getElementById("navCounter");
@@ -6080,14 +6157,71 @@ function openDetail(id){
   counterEl.textContent = `${idx+1} / ${total}`;
   prevBtn.disabled = total <= 1;
   nextBtn.disabled = total <= 1;
-  const ing = (r.ingredients||[]).map(i=>`
-    <div class="ing-row"><div><span class="iname">${esc(i.item)}</span>${i.note?`<span class="inote">${esc(i.note)}</span>`:""}</div><span class="iamt">${esc(i.amount||"")}</span></div>`).join("");
+
+  renderDetailBody();
+  document.getElementById("detailOverlay").classList.add("show");
+  document.getElementById("detailModalBody").scrollTop = 0;
+}
+
+function setSpiceLevel(level){
+  state.detailOptions.spice = level;
+  renderDetailBody();
+}
+function toggleLowSodium(){
+  state.detailOptions.lowSodium = !state.detailOptions.lowSodium;
+  renderDetailBody();
+}
+
+function renderDetailBody(){
+  const r = state.currentRecipe;
+  if(!r) return;
+  const opt = state.detailOptions;
+  const hasSpicyIngredient = (r.ingredients||[]).some(i=>classifyIngredient(i.item)==="spicy");
+  const hasSaltyIngredient = (r.ingredients||[]).some(i=>classifyIngredient(i.item)==="salty");
+  let anyAdjusted = false;
+
+  const ing = (r.ingredients||[]).map(i=>{
+    const kind = classifyIngredient(i.item);
+    let factor = 1;
+    if(kind==="spicy") factor = spiceFactor(opt.spice);
+    if(kind==="salty" && opt.lowSodium) factor = 0.65;
+    const scaled = scaleAmount(i.amount||"", factor);
+    if(scaled.changed) anyAdjusted = true;
+    return `<div class="ing-row"><div><span class="iname">${esc(i.item)}</span>${i.note?`<span class="inote">${esc(i.note)}</span>`:""}</div><span class="iamt${scaled.changed?' adjusted':''}">${esc(scaled.text)}</span></div>`;
+  }).join("");
+
   const steps = (r.steps||[]).map((s,idx)=>`<div class="step-row"><div class="snum">${idx+1}</div><div>${esc(s)}</div></div>`).join("");
   const nutrition = (r.nutrition||[]).map(s=>`<li>${esc(s)}</li>`).join("");
-  const health = (r.health_notes||[]).map(s=>`<li>${esc(s)}</li>`).join("");
+  let healthList = (r.health_notes||[]).map(s=>`<li>${esc(s)}</li>`);
+  if(opt.lowSodium && hasSaltyIngredient){
+    healthList.unshift(`<li><b>저염 모드 적용 중</b> — 간장·소금류 양을 약 35% 줄였습니다.</li>`);
+  }
+  if(opt.spice!=="normal" && hasSpicyIngredient){
+    healthList.unshift(`<li><b>${opt.spice==="mild"?"순한맛":"매운맛"} 모드 적용 중</b> — 고춧가루·고추장류 양을 ${opt.spice==="mild"?"40% 줄였":"40% 늘렸"}습니다.</li>`);
+  }
+  const health = healthList.join("");
   const tips = (r.tips||[]).map(s=>`<li>${esc(s)}</li>`).join("");
   const tasteTags = (r.tags&&r.tags.taste||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join("");
   const healthTags = (r.tags&&r.tags.health||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join("");
+
+  const controlsHtml = (hasSpicyIngredient || hasSaltyIngredient) ? `
+    <div class="adjust-bar">
+      ${hasSpicyIngredient ? `
+      <div class="adjust-group">
+        <span class="adjust-label">매운맛</span>
+        <div class="seg" role="group">
+          <button class="seg-btn ${opt.spice==='mild'?'active':''}" onclick="setSpiceLevel('mild')">순하게</button>
+          <button class="seg-btn ${opt.spice==='normal'?'active':''}" onclick="setSpiceLevel('normal')">보통</button>
+          <button class="seg-btn ${opt.spice==='hot'?'active':''}" onclick="setSpiceLevel('hot')">맵게</button>
+        </div>
+      </div>` : ""}
+      ${hasSaltyIngredient ? `
+      <div class="adjust-group">
+        <span class="adjust-label">저염 모드</span>
+        <button class="toggle-switch ${opt.lowSodium?'on':''}" onclick="toggleLowSodium()"><span class="knob"></span></button>
+      </div>` : ""}
+    </div>
+  ` : "";
 
   document.getElementById("detailContent").innerHTML = `
     <div class="rband">
@@ -6100,8 +6234,11 @@ function openDetail(id){
         <span>${esc(r.servings||"")}</span>
       </div>
     </div>
+    ${controlsHtml}
     <div class="rcontent">
-      <div class="rsection"><div class="rsection-title"><span class="num">1</span>재료</div><div class="rrule"></div>${ing}</div>
+      <div class="rsection"><div class="rsection-title"><span class="num">1</span>재료</div><div class="rrule"></div>${ing}
+        ${anyAdjusted?'<div class="adjust-note">* 골드로 표시된 양은 선택하신 매운맛/저염 설정에 따라 자동 조절되었습니다.</div>':''}
+      </div>
       <div class="rsection"><div class="rsection-title"><span class="num">2</span>조리 순서</div><div class="rrule"></div>${steps}</div>
       <div class="rsection"><div class="rsection-title"><span class="num">3</span>영양 포인트</div><div class="rrule"></div><ul class="plainlist">${nutrition}</ul></div>
       <div class="rsection"><div class="rsection-title"><span class="num">4</span>건강 고려사항</div><div class="rrule"></div><div class="healthbox"><ul class="plainlist">${health}</ul></div></div>
@@ -6124,8 +6261,6 @@ function openDetail(id){
       <div class="tagline">PINETREE FAMILY OFFICE · 간편 건강 레시피 컬렉션</div>
     </div>
   `;
-  document.getElementById("detailOverlay").classList.add("show");
-  document.getElementById("detailModalBody").scrollTop = 0;
 }
 
 function navigateDetail(dir){
