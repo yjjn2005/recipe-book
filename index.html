@@ -12,87 +12,136 @@
   --cream:#FBF9F4; --ink:#2A2A28; --line:#E6DCC6;
 }
 *{box-sizing:border-box;}
+html{ scroll-behavior:smooth; }
 body{
-  margin:0; font-family:'Nanum Gothic',sans-serif; background:var(--cream); color:var(--ink);
+  margin:0; font-family:'Nanum Gothic',sans-serif; color:var(--ink);
   -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(198,161,91,0.07), transparent 40%),
+    radial-gradient(circle at 100% 20%, rgba(15,37,68,0.05), transparent 45%),
+    var(--cream);
+  min-height:100vh;
 }
 .topbar{
   background:linear-gradient(155deg,var(--navy-deep) 0%,var(--navy) 65%);
-  color:#fff; padding:22px 20px 18px 20px; position:sticky; top:0; z-index:20;
+  color:#fff; padding:20px 20px 16px 20px; position:sticky; top:0; z-index:20;
   border-bottom:2px solid var(--gold);
+  box-shadow:0 4px 18px rgba(10,24,48,0.25);
 }
-.topbar-inner{max-width:900px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+.topbar-inner{max-width:960px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px;}
 .brand{display:flex; flex-direction:column;}
 .brand .kicker{color:var(--gold-soft); font-size:9px; letter-spacing:2.5px; font-weight:700;}
-.brand h1{font-family:'Noto Serif KR',serif; font-weight:900; font-size:22px; margin:3px 0 0 0;}
+.brand h1{font-family:'Noto Serif KR',serif; font-weight:900; font-size:23px; margin:3px 0 0 0; letter-spacing:0.5px;}
+.brand .count{ color:#B9AF9B; font-size:10.5px; margin-top:2px; }
 .pin-badge{
-  border:1px solid var(--gold); color:var(--gold-soft); background:transparent;
-  font-size:11px; padding:6px 12px; border-radius:16px; cursor:pointer; font-weight:700;
-  white-space:nowrap;
+  border:1px solid var(--gold); color:var(--gold-soft); background:rgba(255,255,255,0.04);
+  font-size:11.5px; padding:8px 15px; border-radius:20px; cursor:pointer; font-weight:700;
+  white-space:nowrap; transition:background .15s, transform .15s;
 }
+.pin-badge:hover{ background:rgba(198,161,91,0.18); transform:translateY(-1px); }
 
-.category-bar{max-width:900px; margin:16px auto 0 auto; padding:0 16px; display:flex; gap:10px;}
+.category-bar{max-width:960px; margin:18px auto 0 auto; padding:0 16px; display:flex; gap:10px;}
 .cat-btn{
-  flex:1; padding:14px 10px; border-radius:12px; border:2px solid var(--line);
-  background:#fff; font-family:'Noto Serif KR',serif; font-weight:700; font-size:15px;
-  color:#999; cursor:pointer; transition:all .15s;
+  flex:1; padding:15px 10px; border-radius:14px; border:2px solid var(--line);
+  background:#fff; font-family:'Noto Serif KR',serif; font-weight:700; font-size:15.5px;
+  color:#999; cursor:pointer; transition:all .18s;
+  display:flex; align-items:center; justify-content:center; gap:7px;
 }
+.cat-btn:hover{ border-color:var(--gold-soft); color:var(--navy); }
 .cat-btn.active{ border-color:var(--gold); color:var(--navy); background:#FFFDF7;
-  box-shadow:0 2px 10px rgba(198,161,91,0.25); }
+  box-shadow:0 4px 14px rgba(198,161,91,0.3); transform:translateY(-1px); }
 
-.tag-row{max-width:900px; margin:12px auto 0 auto; padding:0 16px; display:flex; gap:8px; flex-wrap:wrap;}
+.tag-row{max-width:960px; margin:14px auto 0 auto; padding:0 16px; display:flex; gap:8px; flex-wrap:wrap;}
 .tag-chip{
-  padding:6px 14px; border-radius:16px; border:1px solid var(--line); background:#fff;
-  font-size:12.5px; color:#666; cursor:pointer; font-weight:700;
+  padding:7px 15px; border-radius:18px; border:1px solid var(--line); background:#fff;
+  font-size:12.5px; color:#666; cursor:pointer; font-weight:700; transition:all .15s;
 }
-.tag-chip.active{ background:var(--navy); color:var(--gold-soft); border-color:var(--navy); }
+.tag-chip:hover{ border-color:var(--gold); color:var(--navy); }
+.tag-chip.active{ background:var(--navy); color:var(--gold-soft); border-color:var(--navy);
+  box-shadow:0 2px 8px rgba(15,37,68,0.25); }
 
-.search-row{max-width:900px; margin:12px auto 0 auto; padding:0 16px;}
-.search-row input{
-  width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line);
-  font-size:14px; font-family:'Nanum Gothic',sans-serif; background:#fff;
+.search-row{max-width:960px; margin:14px auto 0 auto; padding:0 16px; position:relative;}
+.search-row::before{
+  content:"🔍"; position:absolute; left:30px; top:50%; transform:translateY(-50%);
+  font-size:13px; opacity:0.5; pointer-events:none;
 }
+.search-row input{
+  width:100%; padding:12px 14px 12px 38px; border-radius:12px; border:1px solid var(--line);
+  font-size:14px; font-family:'Nanum Gothic',sans-serif; background:#fff;
+  transition:border-color .15s, box-shadow .15s;
+}
+.search-row input:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(198,161,91,0.15); }
 
 .grid{
-  max-width:900px; margin:18px auto 40px auto; padding:0 16px;
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px;
+  max-width:960px; margin:20px auto 60px auto; padding:0 16px;
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px;
 }
 .card{
-  background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden;
-  cursor:pointer; transition:transform .15s, box-shadow .15s;
+  background:#fff; border:1px solid var(--line); border-radius:16px; overflow:hidden;
+  cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, border-color .18s;
 }
-.card:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(15,37,68,0.12); }
-.card-head{ background:linear-gradient(155deg,var(--navy-deep) 0%,var(--navy) 65%); padding:16px 18px 12px 18px; }
-.card-head .name{ font-family:'Noto Serif KR',serif; font-weight:900; color:#fff; font-size:19px; }
-.card-head .summary{ color:#C9BEA9; font-size:11.5px; margin-top:4px; line-height:1.4; }
-.card-body{ padding:12px 18px 16px 18px; }
-.card-meta{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
-.pill{ border:1px solid var(--gold); color:var(--navy); font-size:10.5px; padding:2px 9px; border-radius:12px; font-weight:700;}
+.card:hover{ transform:translateY(-4px); box-shadow:0 14px 28px rgba(15,37,68,0.16); border-color:var(--gold-soft); }
+.card:active{ transform:translateY(-1px); }
+.card-head{ background:linear-gradient(155deg,var(--navy-deep) 0%,var(--navy) 65%); padding:18px 20px 14px 20px; position:relative; }
+.card-head::after{
+  content:""; position:absolute; left:20px; right:20px; bottom:0; height:1px;
+  background:linear-gradient(90deg, var(--gold) 0%, transparent 70%);
+}
+.card-head .name{ font-family:'Noto Serif KR',serif; font-weight:900; color:#fff; font-size:20px; letter-spacing:0.3px;}
+.card-head .summary{ color:#C9BEA9; font-size:11.5px; margin-top:5px; line-height:1.45; }
+.card-body{ padding:14px 20px 18px 20px; }
+.card-meta{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.pill{ border:1px solid var(--gold); color:var(--navy); font-size:10.5px; padding:3px 10px; border-radius:12px; font-weight:700;}
 .card-tags{ display:flex; gap:5px; flex-wrap:wrap; }
-.mini-tag{ font-size:10px; color:#999; background:#F3F1EB; padding:2px 8px; border-radius:9px; }
+.mini-tag{ font-size:10px; color:#8a7d5e; background:#F3F1EB; padding:3px 9px; border-radius:9px; font-weight:700; }
 
-.empty-state{ max-width:900px; margin:60px auto; text-align:center; color:#999; padding:0 20px; }
+.empty-state{ max-width:960px; margin:70px auto; text-align:center; color:#999; padding:0 20px; font-size:14px; }
 
 .fab{
-  position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
-  background:var(--navy); color:var(--gold-soft); border:2px solid var(--gold);
-  font-size:26px; display:flex; align-items:center; justify-content:center; cursor:pointer;
-  box-shadow:0 6px 18px rgba(15,37,68,0.35); z-index:30;
+  position:fixed; right:22px; bottom:22px; width:58px; height:58px; border-radius:50%;
+  background:linear-gradient(155deg,var(--navy-deep),var(--navy)); color:var(--gold-soft); border:2px solid var(--gold);
+  font-size:27px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 8px 22px rgba(15,37,68,0.4); z-index:30; transition:transform .15s;
 }
+.fab:hover{ transform:scale(1.06) translateY(-2px); }
+.fab:active{ transform:scale(0.96); }
 
 /* Modal (recipe detail / add form / pin) */
 .overlay{
-  display:none; position:fixed; inset:0; background:rgba(10,24,48,0.55); z-index:50;
+  display:none; position:fixed; inset:0; background:rgba(10,24,48,0.6); z-index:50;
   align-items:flex-start; justify-content:center; overflow-y:auto; padding:26px 14px;
+  backdrop-filter:blur(2px);
 }
-.overlay.show{ display:flex; }
+.overlay.show{ display:flex; animation:fadeIn .18s ease; }
+@keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes popIn{ from{ opacity:0; transform:translateY(10px) scale(0.98); } to{ opacity:1; transform:translateY(0) scale(1); } }
 .modal{
-  background:var(--cream); max-width:640px; width:100%; border-radius:14px; overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  background:var(--cream); max-width:660px; width:100%; border-radius:18px; overflow:hidden;
+  box-shadow:0 24px 70px rgba(0,0,0,0.35); animation:popIn .2s ease;
 }
 .modal-close{
-  position:absolute; top:14px; right:16px; color:#fff; background:rgba(255,255,255,0.15);
-  border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer;
+  position:absolute; top:14px; right:16px; color:#fff; background:rgba(255,255,255,0.18);
+  border:none; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer;
+  transition:background .15s; z-index:5;
+}
+.modal-close:hover{ background:rgba(255,255,255,0.32); }
+
+/* Prev/Next recipe navigation */
+.nav-arrow{
+  position:fixed; top:50%; transform:translateY(-50%); width:46px; height:46px; border-radius:50%;
+  background:rgba(15,37,68,0.55); color:var(--gold-soft); border:1.5px solid rgba(198,161,91,0.6);
+  font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  z-index:55; transition:background .15s, transform .15s;
+}
+.nav-arrow:hover{ background:rgba(15,37,68,0.85); transform:translateY(-50%) scale(1.08); }
+.nav-arrow.prev{ left:18px; }
+.nav-arrow.next{ right:18px; }
+.nav-counter{
+  position:sticky; top:0; z-index:6; background:rgba(15,37,68,0.9); color:var(--gold-soft);
+  text-align:center; font-size:11px; letter-spacing:1px; padding:6px 0; font-weight:700;
+}
+@media (max-width:720px){
+  .nav-arrow{ display:none; }
 }
 
 /* Recipe detail styles (matches PDF card) */
@@ -124,7 +173,18 @@ ul.plainlist li::before{ content:""; position:absolute; left:0; top:11px; width:
 .rfooter .rule2{ height:1px; background:linear-gradient(90deg,transparent 0%, var(--gold) 50%, transparent 100%); margin-bottom:10px;}
 .rfooter .brand2{ font-family:'Noto Serif KR',serif; font-weight:700; letter-spacing:2px; color:var(--navy); font-size:10px;}
 .rfooter .tagline{ color:#999; font-size:8.5px; margin-top:2px; }
-.detail-actions{ display:flex; gap:8px; padding:0 28px 20px 28px; }
+.detail-actions{ display:flex; gap:8px; padding:0 28px 12px 28px; }
+.mobile-nav{
+  display:none; gap:8px; padding:0 28px 20px 28px;
+}
+@media (max-width:720px){
+  .mobile-nav{ display:flex; }
+}
+.mobile-nav button{
+  flex:1; padding:11px; border-radius:9px; border:1px solid var(--line); background:#fff;
+  color:var(--navy); font-weight:700; font-size:13px; cursor:pointer;
+}
+.mobile-nav button:active{ background:#F3F1EB; }
 .btn{ flex:1; padding:10px; border-radius:8px; border:none; font-weight:700; font-size:13px; cursor:pointer; }
 .btn-pdf{ background:var(--navy); color:var(--gold-soft); }
 .btn-del{ background:#fff; color:#B3403A; border:1px solid #E6B8B3; }
@@ -163,14 +223,15 @@ ul.plainlist li::before{ content:""; position:absolute; left:0; top:11px; width:
     <div class="brand">
       <div class="kicker">유 앤 김 패 밀 리</div>
       <h1>레시피북</h1>
+      <div class="count" id="recipeCount"></div>
     </div>
-    <button class="pin-badge" onclick="openPinModal()" id="pinBtn">PIN 동기화</button>
+    <button class="pin-badge" onclick="openPinModal()" id="pinBtn">⟳ PIN 동기화</button>
   </div>
 </div>
 
 <div class="category-bar">
-  <button class="cat-btn active" id="catTasteBtn" onclick="setCategory('taste')">맛으로 찾기</button>
-  <button class="cat-btn" id="catHealthBtn" onclick="setCategory('health')">건강으로 찾기</button>
+  <button class="cat-btn active" id="catTasteBtn" onclick="setCategory('taste')">🍽 맛으로 찾기</button>
+  <button class="cat-btn" id="catHealthBtn" onclick="setCategory('health')">🌿 건강으로 찾기</button>
 </div>
 
 <div class="tag-row" id="tagRow"></div>
@@ -186,10 +247,17 @@ ul.plainlist li::before{ content:""; position:absolute; left:0; top:11px; width:
 
 <!-- Recipe Detail Modal -->
 <div class="overlay" id="detailOverlay">
-  <div class="modal" style="position:relative;">
+  <button class="nav-arrow prev" id="navPrevBtn" onclick="navigateDetail(-1)" title="이전 레시피">‹</button>
+  <div class="modal" id="detailModal" style="position:relative;">
     <button class="modal-close" onclick="closeModal('detailOverlay')">✕</button>
+    <div class="nav-counter" id="navCounter"></div>
     <div id="detailContent"></div>
+    <div class="mobile-nav">
+      <button onclick="navigateDetail(-1)">‹ 이전 레시피</button>
+      <button onclick="navigateDetail(1)">다음 레시피 ›</button>
+    </div>
   </div>
+  <button class="nav-arrow next" id="navNextBtn" onclick="navigateDetail(1)" title="다음 레시피">›</button>
 </div>
 
 <!-- Add/Edit Form Modal -->
@@ -5926,7 +5994,9 @@ const SEED_RECIPES = [
 let state = {
   category:"taste",
   activeTags:[],
-  recipes: loadLocal()
+  recipes: loadLocal(),
+  filteredList: [],
+  currentIndex: -1
 };
 
 function loadLocal(){
@@ -5974,6 +6044,8 @@ function renderGrid(){
     }
     return true;
   });
+  state.filteredList = list;
+  document.getElementById("recipeCount").textContent = `총 ${state.recipes.length}개 레시피 · ${list.length}개 표시 중`;
   document.getElementById("emptyState").style.display = list.length? "none":"block";
   grid.innerHTML = list.map(r=>{
     const rtags = (r.tags && r.tags[catKey]) || [];
@@ -5998,6 +6070,28 @@ function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,
 function openDetail(id){
   const r = state.recipes.find(x=>x.id===id);
   if(!r) return;
+
+  // 현재 필터된 목록 기준으로 인덱스 계산 (이전/다음 탐색용)
+  let list = state.filteredList;
+  let idx = list.findIndex(x=>x.id===id);
+  if(idx === -1){ list = state.recipes; idx = list.findIndex(x=>x.id===id); }
+  state.currentIndex = idx;
+  state.navList = list;
+
+  const total = list.length;
+  const counterEl = document.getElementById("navCounter");
+  const prevBtn = document.getElementById("navPrevBtn");
+  const nextBtn = document.getElementById("navNextBtn");
+  if(total > 1){
+    counterEl.textContent = `${idx+1} / ${total}`;
+    counterEl.style.display = "block";
+    prevBtn.style.display = "flex";
+    nextBtn.style.display = "flex";
+  }else{
+    counterEl.style.display = "none";
+    prevBtn.style.display = "none";
+    nextBtn.style.display = "none";
+  }
   const ing = (r.ingredients||[]).map(i=>`
     <div class="ing-row"><div><span class="iname">${esc(i.item)}</span>${i.note?`<span class="inote">${esc(i.note)}</span>`:""}</div><span class="iamt">${esc(i.amount||"")}</span></div>`).join("");
   const steps = (r.steps||[]).map((s,idx)=>`<div class="step-row"><div class="snum">${idx+1}</div><div>${esc(s)}</div></div>`).join("");
@@ -6043,7 +6137,41 @@ function openDetail(id){
     </div>
   `;
   document.getElementById("detailOverlay").classList.add("show");
+  document.getElementById("detailOverlay").scrollTop = 0;
 }
+
+function navigateDetail(dir){
+  const list = state.navList || state.filteredList;
+  if(!list || list.length < 2) return;
+  let idx = state.currentIndex + dir;
+  if(idx < 0) idx = list.length - 1;
+  if(idx >= list.length) idx = 0;
+  openDetail(list[idx].id);
+}
+
+document.addEventListener("keydown", (e)=>{
+  if(!document.getElementById("detailOverlay").classList.contains("show")) return;
+  if(e.key === "ArrowLeft") navigateDetail(-1);
+  if(e.key === "ArrowRight") navigateDetail(1);
+  if(e.key === "Escape") closeModal("detailOverlay");
+});
+
+(function setupSwipe(){
+  let startX = null, startY = null;
+  const modal = document.getElementById("detailModal");
+  modal.addEventListener("touchstart", (e)=>{
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+  }, {passive:true});
+  modal.addEventListener("touchend", (e)=>{
+    if(startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)*1.5){
+      navigateDetail(dx < 0 ? 1 : -1);
+    }
+    startX = null; startY = null;
+  }, {passive:true});
+})();
 
 function deleteRecipe(id){
   if(!confirm("이 레시피를 삭제할까요?")) return;
